@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <title>Your Exercise Plans</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+
+.back-button {
+      display: block;
+      margin: 40px auto 0;
+      padding: 12px 24px;
+      background-color: #145a8d;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      text-align: center;
+      width: fit-content;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+    .back-button:hover {
+      background-color: #2e86c1;
+    }
+    </style>
+</head>
+<body>
+    <h2>Your Exercise Plans</h2>
+
+    {% if plans %}
+        {% for plan in plans %}
+            <div class="exercise-plan-card">
+                <h3>{{ plan.plan_name }}</h3>
+                <p><strong>Difficulty:</strong> {{ plan.difficulty_level }}</p>
+                <p><strong>Description:</strong> {{ plan.description }}</p>
+
+                {% if plan.exercise_progress %}
+                    <h4>Progress:</h4>
+                    <ul>
+                        {% for progress in plan.exercise_progress %}
+                            <li>
+                                <strong>Date:</strong> {{ progress.progress_date }}<br>
+                                <strong>Completed:</strong> {{ progress.exercises_completed }}<br>
+                                <strong>Mobility Score:</strong> {{ progress.mobility_improvement_score or 'N/A' }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No progress recorded yet.</p>
+                {% endif %}
+
+                <form action="{{ url_for('track_progress', plan_id=plan.id) }}" method="GET">
+                    <button type="submit">Track Progress</button>
+                </form>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>You don’t have any exercise plans yet.</p>
+    {% endif %}
+
+    <form action="{{ url_for('add_exercise_plan') }}" method="GET">
+        <button type="submit">Add New Plan</button>
+    </form>
+
+    <form action="{{ url_for('logout') }}" method="GET">
+        <button type="submit">Logout</button>
+    </form>
+
+    <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+</body>
+</html>

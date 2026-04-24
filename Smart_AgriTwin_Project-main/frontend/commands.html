@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Commands — Smart AgriTwin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body{ background: linear-gradient(135deg,#eef2f3,#dfe9f3); padding-top:90px; font-family:Inter, sans-serif;}
+    .card{ border:none;border-radius:12px; box-shadow:0 6px 25px rgba(0,0,0,0.08);}
+    .container-narrow{ max-width:1100px; margin:auto; }
+    .nav-link { color:#fff !important; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/static/dashboard.html">🌱 Smart AgriTwin</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navCmds">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navCmds">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="/static/dashboard.html">🏡 Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/devices.html">🔌 Devices</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/send_telemetry.html">📡 Send Telemetry</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/static/commands.html">🖥️ Commands</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/rules.html">⚙️ Rules</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/alerts.html">🚨 Alerts</a></li>
+      </ul>
+
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><span id="username-label" class="navbar-text text-white me-3"></span></li>
+        <li class="nav-item"><button class="btn btn-outline-light btn-sm" id="logoutCmd">Logout</button></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container-narrow mt-4">
+  <div class="card p-4">
+    <h3>Device Commands</h3>
+    <p class="text-muted">Send manual commands and view recent command log.</p>
+
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <label>Zone</label>
+        <select id="cmdZone" class="form-select"></select>
+      </div>
+      <div class="col-md-4">
+        <label>Command</label>
+        <select id="cmdSelect" class="form-select">
+          <option value="pump_on">pump_on</option>
+          <option value="pump_off">pump_off</option>
+          <option value="vent_on">vent_on</option>
+          <option value="vent_off">vent_off</option>
+          <option value="custom">custom</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label>Custom (if custom)</label>
+        <input id="cmdCustom" class="form-control" placeholder="e.g. set_fan_speed:3">
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end mb-4">
+      <button class="btn btn-primary" id="sendCmdBtn">Send Command</button>
+    </div>
+
+    <h5>Recent Commands</h5>
+    <div id="cmdLog" class="list-group"></div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+const username = localStorage.getItem('username') || '';
+if(!token) location.href='/static/login.html';
+document.getElementById('username-label').innerText = username ? 'Logged in as: '+username : '';
+document.getElementById('logoutCmd').addEventListener('click', ()=>{ localStorage.removeItem('token'); localStorage.removeItem('username'); location.href='/static/login.html'; });
+
+async function loadZonesForCmd(){
+  const res = await fetch('/api/zones/', { headers:{ Authorization:'Bearer ' + token }});
+  if (res.status === 401) return (localStorage.removeItem('token'), location.href='/static/login.html');
+  const zones = await res.json();
+  const sel = document.getElementById('cmdZone');
+  sel.innerHTML = '';
+  zones.forEach(z => sel.innerHTML += `<option value="${z.id}">${z.name} (id:${z.id})</option>`);
+}
+
+async function loadLog(){
+  // try /api/commands/log first (may not exist)
+  try {
+    const res = await fetch('/api/commands/log', { headers:{ Authorization:'Bearer ' + token }});
+    if (res.status === 401) return (localStorage.removeItem('token'), location.href='/static/login.html');
+    if (!res.ok) throw new Error('no-log');
+    const logs = await res.json();
+    const node = document.getElementById('cmdLog'); node.innerHTML = '';
+    logs.forEach(l => node.innerHTML += `<div class="list-group-item"><strong>${l.command}</strong> — zone ${l.zone_id} • ${new Date(l.timestamp).toLocaleString()}</div>`);
+    return;
+  } catch(e) {
+    // fallback: show last commands by scanning CommandLog if there's a reports endpoint
+    try {
+      const rep = await fetch('/api/reports/resource-usage', { headers:{ Authorization:'Bearer ' + token }});
+      if (rep.ok) {
+        document.getElementById('cmdLog').innerHTML = '<div class="small text-muted">No dedicated command log; backend has CommandLog model? Check DB. You can still send commands.</div>';
+        return;
+      }
+    } catch(e){}
+    document.getElementById('cmdLog').innerHTML = '<div class="small text-muted">No command log endpoint found on backend. You can still send commands — they will be stored if backend implements CommandLog.</div>';
+  }
+}
+
+async function sendCommand(){
+  const zone_id = Number(document.getElementById('cmdZone').value);
+  const cmd = document.getElementById('cmdSelect').value === 'custom' ? document.getElementById('cmdCustom').value.trim() : document.getElementById('cmdSelect').value;
+  if(!cmd) return alert('Enter command');
+
+  const res = await fetch('/api/commands/send', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json','Authorization':'Bearer '+token },
+    body: JSON.stringify({ zone_id, command: cmd })
+  });
+  if (res.status === 401) return (localStorage.removeItem('token'), location.href='/static/login.html');
+  if(!res.ok) return alert('Failed to send command');
+  alert('Command sent!');
+  loadLog();
+}
+
+document.getElementById('sendCmdBtn').addEventListener('click', sendCommand);
+
+loadZonesForCmd();
+loadLog();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

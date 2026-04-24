@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Support Groups</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='support_groups.css') }}">
+</head>
+<body>
+
+<header>
+  <h1>Join Online Support Groups</h1>
+</header>
+
+<nav>
+  <a href="{{ url_for('index') }}">Home</a>
+  <a href="{{ url_for('chatbot') }}">Chatbot</a>
+  <a href="{{ url_for('track_symptoms') }}">Track Symptoms</a>
+</nav>
+
+<section id="available-groups">
+  <h2 class="section-title">Available Support Groups</h2>
+  <div class="content">
+    {% for group in groups %}
+      <div class="card">
+        <h3>{{ group.group_name }}</h3>
+        <p>{{ group.description }}</p>
+        {% if group.id in joined_group_ids %}
+          <button class="join-button disabled-button" disabled>✅ Already Joined</button>
+        {% else %}
+          <a href="{{ url_for('join_group', group_id=group.id) }}" class="join-button">Join Group</a>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% if joined_group_ids %}
+  <section id="joined-groups">
+    <h2 class="section-title">Your Joined Groups</h2>
+    <div class="content joined-section">
+      {% for group in groups %}
+        {% if group.id in joined_group_ids %}
+          <div class="card">
+            <h3>{{ group.group_name }}</h3>
+            <p>{{ group.description }}</p>
+            <a href="{{ url_for('chat_room', group_id=group.id) }}" class="join-button">💬 Go to Chat</a>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+<a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+
+</body>
+</html>

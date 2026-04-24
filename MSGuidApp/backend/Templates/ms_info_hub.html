@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MS Information Hub</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f4f7;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2e86c1;
+      text-align: center;
+    }
+    #fetch-info {
+      display: block;
+      margin: 20px auto;
+      padding: 12px 24px;
+      background-color: #2e86c1;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #fetch-info:hover {
+      background-color: #145a8d;
+    }
+    .info-box {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #eaf2f8;
+      border-left: 5px solid #2e86c1;
+      min-height: 100px;
+    }
+    .info-box ul {
+      list-style-type: disc;
+      padding-left: 20px;
+    }
+    .placeholder-text {
+      color: #777;
+    }
+    .error {
+      color: red;
+    }
+    .back-button {
+      display: block;
+      margin: 40px auto 0;
+      padding: 12px 24px;
+      background-color: #145a8d;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      text-align: center;
+      width: fit-content;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+    .back-button:hover {
+      background-color: #2e86c1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>MS Information Hub</h1>
+  <p>Click the button below to get the latest information about Multiple Sclerosis from the web.</p>
+
+  <button id="fetch-info">Get Latest MS Info</button>
+
+  <div id="ms-info-box" class="info-box">
+    <p class="placeholder-text">Information will appear here...</p>
+  </div>
+
+  <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+</div>
+
+<script>
+document.getElementById("fetch-info").addEventListener("click", function () {
+    const infoBox = document.getElementById("ms-info-box");
+    infoBox.innerHTML = "<p>Loading latest MS information...</p>";
+
+    fetch("/fetch_ms_info_ajax", { method: "POST" })
+    .then(res => {
+      if (!res.ok) throw new Error("Network response was not ok");
+      return res.json();
+    })
+    .then(data => {
+      let output = `<p>${data.ms_info}</p>`;
+
+      if (data.articles && data.articles.length > 0) {
+        output += "<ul>";
+        data.articles.forEach(title => {
+          output += `<li>${title}</li>`;
+        });
+        output += "</ul>";
+      } else {
+        output += "<p><em>No recent articles found. Try again later.</em></p>";
+      }
+
+      infoBox.innerHTML = output;
+    })
+    .catch(err => {
+      console.error("Fetch error:", err);
+      infoBox.innerHTML = `<p class="error">Error fetching info: ${err.message}. Please check your connection or try again later.</p>`;
+    });
+});
+
+
+</script>
+
+</body>
+</html>

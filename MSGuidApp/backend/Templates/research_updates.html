@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MS Research Updates</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f4f7;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 30px;
+    }
+    h2 {
+      text-align: center;
+      color: #145a8d;
+    }
+    ul {
+      list-style-type: disc;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 15px;
+    }
+    .back-button {
+      display: block;
+      margin: 30px auto 0;
+      text-align: center;
+      padding: 10px 20px;
+      background-color: #2e86c1;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      width: fit-content;
+    }
+    .back-button:hover {
+      background-color: #145a8d;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Latest MS Research & News Updates</h2>
+
+    <ul id="research-list">
+      <li>Loading research updates...</li>
+    </ul>
+
+    <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      fetch("/api/check-new-faqs")
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById("research-list");
+          list.innerHTML = ""; // Clear loading message
+
+          if (!data.articles || data.articles.length === 0) {
+            list.innerHTML = "<li>No recent updates found.</li>";
+            return;
+          }
+
+          data.articles.forEach(article => {
+            const item = document.createElement("li");
+            item.textContent = article;
+            list.appendChild(item);
+          });
+        })
+        .catch(err => {
+          console.error("Error fetching updates:", err);
+          document.getElementById("research-list").innerHTML = "<li>Failed to load updates. Please try again later.</li>";
+        });
+    });
+  </script>
+</body>
+</html>

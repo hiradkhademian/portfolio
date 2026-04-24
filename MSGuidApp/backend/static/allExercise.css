@@ -1,0 +1,25 @@
+.exercise-plan-card {
+    background-color: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    max-width: 600px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.exercise-plan-card h3 {
+    margin-top: 0;
+}
+.exercise-plan-card button {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+.exercise-plan-card button:hover {
+    background-color: #27ae60;
+}

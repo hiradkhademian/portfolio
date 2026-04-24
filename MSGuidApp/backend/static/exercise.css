@@ -1,0 +1,82 @@
+/* Base reset and font */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f5f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+    margin: 0;
+}
+
+/* Heading */
+h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+/* Form container */
+form {
+    background-color: #ffffff;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    max-width: 400px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Labels and inputs */
+label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+    color: #34495e;
+}
+
+input[type="text"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+/* Textarea height */
+textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Submit button */
+input[type="submit"] {
+    margin-top: 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+input[type="submit"]:hover {
+    background-color: #2980b9;
+}
+
+/* Back link */
+a {
+    margin-top: 20px;
+    display: inline-block;
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+a:hover {
+    text-decoration: underline;
+}

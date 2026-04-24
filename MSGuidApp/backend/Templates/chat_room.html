@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ group.group_name }} Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+    .chat-container {
+      max-width: 700px;
+      margin: 50px auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #2e86c1;
+    }
+    #message-box {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background-color: #fcfdfe;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      margin: 5px 0;
+      padding: 8px 12px;
+      border-radius: 5px;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+    .user-message {
+      background-color: #d1f2eb;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+    .other-message {
+      background-color: #ecf0f1;
+      align-self: flex-start;
+      margin-right: auto;
+    }
+    .input-area {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    #chat-input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    #send-btn {
+      padding: 10px 15px;
+      background-color: #2e86c1;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #send-btn:hover {
+      background-color: #145a8d;
+    }
+    .back-button {
+      display: block;
+      margin: 20px auto;
+      width: fit-content;
+      padding: 10px 20px;
+      background-color: #145a8d;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+    .back-button:hover {
+      background-color: #2e86c1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+  <h2>💬 {{ group.group_name }}</h2>
+  <div id="message-box"></div>
+
+  <div class="input-area">
+    <input type="text" id="chat-input" placeholder="Type a message..." />
+    <button id="send-btn">Send</button>
+  </div>
+
+  <a href="{{ url_for('support_groups_page') }}" class="back-button">Back to Groups</a>
+</div>
+
+<script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+<script>
+    const socket = io();
+  
+    // Ensure group ID and user ID are rendered as numbers
+    const groupId = parseInt("{{ group.id }}", 10);
+    const userId = parseInt("{{ current_user_id }}", 10);
+  
+    function addMessage(message, senderId) {
+      const msgBox = document.getElementById("message-box");
+      if (!msgBox) return;
+  
+      const div = document.createElement("div");
+      div.className = "message";
+  
+      if (parseInt(senderId, 10) === userId) {
+        div.classList.add("user-message");
+      } else {
+        div.classList.add("other-message");
+      }
+  
+      div.textContent = message;
+      msgBox.appendChild(div);
+      msgBox.scrollTop = msgBox.scrollHeight;
+    }
+  
+    // Load existing messages via JSON
+    document.addEventListener("DOMContentLoaded", () => {
+      const messages = JSON.parse('{{ messages | tojson | safe }}'); // Convert Jinja2 list to JSON
+  
+      if (messages.length > 0) {
+        messages.reverse().forEach(msg => {
+          addMessage(msg.message, msg.user_id);
+        });
+      } else {
+        const noMsg = document.createElement("div");
+        noMsg.className = "message other-message";
+        noMsg.textContent = "No messages yet. Be the first to chat!";
+        const msgBox = document.getElementById("message-box");
+        if (msgBox) {
+          msgBox.appendChild(noMsg);
+        }
+      }
+    });
+  
+    // Real-time messages via SocketIO
+    socket.on("receive_message", (data) => {
+      if (data.group_id === groupId) {
+        addMessage(data.message, data.user_id);
+      }
+    });
+  
+    // Send new message
+    document.getElementById("send-btn").addEventListener("click", () => {
+      const input = document.getElementById("chat-input");
+      const message = input.value.trim();
+      if (!message) return;
+  
+      socket.emit("send_message", { group_id: groupId, message: message, user_id: userId });
+      input.value = "";
+  
+      // Show own message instantly
+      addMessage(message, userId);
+    });
+  </script>
+  
+  
+
+</body>
+</html>

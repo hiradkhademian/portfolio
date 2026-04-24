@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Track Symptoms</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='symptom_tracker.css') }}">
+</head>
+<body>
+  <h2>Track Your Symptoms</h2>
+  <form method="POST">
+    <label>Date: <input type="date" name="date" required></label><br>
+    <label>Fatigue Level (1-10): <input type="number" name="fatigue_level" min="1" max="10"></label><br>
+    <label>Pain Level (1-10): <input type="number" name="pain_level" min="1" max="10"></label><br>
+    <label>Mood: 
+      <select name="mood">
+        <option value="Happy">😊 Happy</option>
+        <option value="Neutral">😐 Neutral</option>
+        <option value="Sad">😢 Sad</option>
+      </select>
+    </label><br>
+    <label>Notes: <textarea name="notes"></textarea></label><br>
+    <button type="submit">Save Log</button>
+  </form>
+  <div>
+    <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assistive Technology</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assistive_technology.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Assistive Technology for MS Patients</h1>
+    </header>
+
+    <section class="content">
+        <form action="{{ url_for('assistive_technology') }}" method="POST" onsubmit="showLoader()">
+            <label for="device_name">Device Name:</label>
+            <input type="text" id="device_name" name="device_name" required>
+
+            <button type="submit">Search & Compare</button>
+        </form>
+
+        <!-- Loader -->
+        <div id="loading-message" style="display: none; text-align: center; margin-top: 15px;">
+            <p>🔎 Searching for assistive technology devices...</p>
+        </div>
+    
+        <!-- eBay Results Section -->
+        {% if ebay_products %}
+            <h2>eBay Results:</h2>
+            <ul>
+                {% for product in ebay_products %}
+                    <li>
+                        <strong>{{ product.name }}</strong> - {{ product.price }} 
+                        (<a href="{{ product.link }}" target="_blank">View on eBay</a>)
+                    </li>
+                {% endfor %}
+            </ul>
+        {% elif ebay_error %}
+            <p style="color: red;">⚠ {{ ebay_error }}</p> <!-- Display API error if applicable -->
+        {% else %}
+            <p>No eBay products found.</p>
+        {% endif %}
+    </section>
+
+    <div>
+        <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+    </div>
+
+    <script>
+        function showLoader() {
+            document.getElementById("loading-message").style.display = "block";
+        }
+    </script>
+</body>
+</html>

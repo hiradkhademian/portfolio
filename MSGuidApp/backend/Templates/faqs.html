@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FAQs - MS Guide</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #2e86c1;
+    }
+    .faq-item {
+      background-color: white;
+      border-left: 5px solid #2e86c1;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .faq-item h3 {
+      margin-top: 0;
+      color: #145a8d;
+    }
+    .faq-item p {
+      margin-bottom: 0;
+    }
+    #new-faqs {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: #eaf2f8;
+      border-left: 5px solid #2e86c1;
+    }
+    #loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+      color: #777;
+    }
+    #error {
+      color: red;
+      text-align: center;
+      margin-top: 20px;
+      display: none;
+    }
+    .back-button {
+      display: block;
+      margin: 40px auto 0;
+      padding: 12px 24px;
+      background-color: #145a8d;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      text-align: center;
+      width: fit-content;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+    .back-button:hover {
+      background-color: #2e86c1;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Frequently Asked Questions</h1>
+
+  <div id="faq-list"></div>
+
+  <!-- Button to check for new FAQs -->
+  <button id="checkNewFaqsBtn">Check for New FAQs (Last Year)</button>
+
+  <!-- Loading, Error, and Result Display -->
+  <div id="loading">Loading recent FAQs...</div>
+  <div id="error"></div>
+  <div id="new-faqs"></div>
+
+  <!-- Back to Home Button -->
+  <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const faqContainer = document.getElementById("faq-list");
+      const newFaqDiv = document.getElementById("new-faqs");
+      const loadingDiv = document.getElementById("loading");
+      const errorDiv = document.getElementById("error");
+
+      // Load existing FAQs from /api/faqs
+      fetch("/api/faqs")
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to load FAQs");
+          return res.json();
+        })
+        .then(data => {
+          data.forEach(faq => {
+            const item = document.createElement("div");
+            item.className = "faq-item";
+            item.innerHTML = `<h3>${faq.question}</h3><p>${faq.answer}</p>`;
+            faqContainer.appendChild(item);
+          });
+        })
+        .catch(err => {
+          console.error("Error fetching FAQs:", err);
+          faqContainer.innerHTML = "<p>Could not load FAQs. Please try again later.</p>";
+        });
+
+      // Check if the button exists before adding event listener
+      const checkNewFaqsBtn = document.getElementById("checkNewFaqsBtn");
+      if (checkNewFaqsBtn) {
+        checkNewFaqsBtn.addEventListener("click", function () {
+          loadingDiv.style.display = "block";
+          errorDiv.style.display = "none";
+          newFaqDiv.innerHTML = "";
+
+          fetch("/api/check-new-faqs")
+            .then(res => {
+              if (!res.ok) throw new Error("Network response was not ok");
+              return res.json();
+            })
+            .then(data => {
+              loadingDiv.style.display = "none";
+
+              if (!data.articles || data.articles.length === 0) {
+                newFaqDiv.innerHTML = "<p>No new FAQs found in the last year.</p>";
+                return;
+              }
+
+              data.articles.forEach(article => {
+                const item = document.createElement("div");
+                item.className = "new-faq-item";
+                item.innerHTML = `<p>• ${article}</p>`;
+                newFaqDiv.appendChild(item);
+              });
+            })
+            .catch(error => {
+              loadingDiv.style.display = "none";
+              errorDiv.style.display = "block";
+              errorDiv.textContent = "Failed to load new FAQs. Please try again later.";
+              console.error("Error fetching new FAQs:", error);
+            });
+        });
+      } else {
+        console.warn("FAQ update button not found.");
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f7fc;
+  color: #333;
+  padding: 20px;
+}
+
+/* Container centers the card vertically and horizontally */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Card container styling */
+.card {
+  background-color: #fff;
+  width: 100%;
+  max-width: 600px;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Card header */
+.card-header {
+  background: linear-gradient(135deg, #4A90E2, #357ABD);
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Card body */
+.card-body {
+  padding: 20px;
+}
+
+/* Card footer */
+.card-footer {
+  background-color: #f4f7fc;
+  padding: 15px;
+  text-align: center;
+}
+
+/* Appointment form */
+.appointment-form .form-group {
+  margin-bottom: 15px;
+}
+
+.appointment-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 16px;
+  color: #4A4A4A;
+}
+
+.appointment-form input,
+.appointment-form textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: border-color 0.3s;
+}
+
+.appointment-form input:focus,
+.appointment-form textarea:focus {
+  border-color: #4A90E2;
+  outline: none;
+}
+
+.appointment-form textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Submit button styling */
+.submit-btn {
+  background-color: #4A90E2;
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  font-size: 18px;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+  background-color: #357ABD;
+}
+
+/* Back Link Styling */
+.back-link {
+  display: inline-block;
+  color: #4A90E2;
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.appointment-list li {
+  margin-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+}

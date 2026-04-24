@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Exercise Progress</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h2>Track Your Progress for {{ plan.plan_name }}</h2>
+    
+    {% if latest_progress %}
+        <h3>Latest Progress:</h3>
+        <p><strong>Date:</strong> {{ latest_progress.progress_date }}</p>
+        <p><strong>Exercises Completed:</strong> {{ latest_progress.exercises_completed }}</p>
+        {% if latest_progress.mobility_improvement_score %}
+            <p><strong>Mobility Improvement Score:</strong> {{ latest_progress.mobility_improvement_score }}</p>
+        {% endif %}
+    {% else %}
+        <p>No progress recorded yet.</p>
+    {% endif %}
+    
+    <h3>Log New Progress:</h3>
+    <form method="POST">
+        <label for="progress_date">Date of Progress:</label>
+        <input type="date" id="progress_date" name="progress_date" required><br><br>
+
+        <label for="exercises_completed">Exercises Completed:</label>
+        <textarea id="exercises_completed" name="exercises_completed" required></textarea><br><br>
+
+        <label for="mobility_improvement_score">Mobility Improvement Score (optional):</label>
+        <input type="number" id="mobility_improvement_score" name="mobility_improvement_score"><br><br>
+
+        <input type="submit" value="Record Progress">
+    </form>
+
+    <a href="{{ url_for('exercise_plans') }}">Go back to exercise plans</a>
+    <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+</body>
+</html>

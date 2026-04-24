@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Emergency Resources</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='emergency.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Emergency Resources</h1>
+    </header>
+
+    <section class="content">
+        <h2>Know what to do in case of an emergency or sudden symptom flare-ups.</h2>
+        
+        <div class="guidelines">
+            <h3>Quick Emergency Tips:</h3>
+            <ul>
+                {% for tip in emergency_guidelines %}
+                    <li>{{ tip }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <h3>Request Emergency Assistance</h3>
+        <form action="{{ url_for('emergency_resources') }}" method="POST">
+            <label for="message">Describe the emergency:</label>
+            <textarea id="message" name="message" rows="4" required></textarea>
+            <button type="submit">Submit Emergency Request</button>
+        </form>
+
+        {% if emergency_requests %}
+        <div class="requests">
+            <h2>Recent Emergency Requests:</h2>
+            <ul>
+                {% for request in emergency_requests %}
+                    <li>
+                        <strong>{{ request.timestamp.strftime("%Y-%m-%d %H:%M") }}</strong>: {{ request.message }}
+                        <span class="status">{{ request.status }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </section>
+    <div>
+        <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+    </div>
+</body>
+</html>

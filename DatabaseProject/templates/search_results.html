@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="catalog">
+    <h2>Search Results for "{{ query }}"</h2>
+
+    {% if results %}
+        <div class="book-grid">
+            {% for book in results %}
+            <div class="book-card">
+                <img src="{{ url_for('static', filename='images/' + (book['image'] or 'default.jpg')) }}" alt="{{ book['title'] }}">
+                <h3>{{ book['title'] }}</h3>
+                <p>by {{ book['author'] }}</p>
+                <p class="price">${{ "%.2f"|format(book['price']) }}</p>
+
+                <form method="POST" action="{{ url_for('add_to_cart', book_id=book['id']) }}">
+                    <button type="submit" class="btn">Add to Cart</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No books found matching your search.</p>
+        <a href="{{ url_for('catalog') }}" class="btn">Return to Catalog</a>
+    {% endif %}
+</section>
+
+{% endblock %}

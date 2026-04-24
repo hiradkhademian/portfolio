@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Exercise Plan</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='exercise.css') }}">
+</head>
+<body>
+    <h2>Add a New Exercise Plan</h2>
+    <form method="POST">
+        <label for="plan_name">Plan Name:</label>
+        <input type="text" id="plan_name" name="plan_name" required><br><br>
+
+        <label for="difficulty_level">Difficulty Level:</label>
+        <input type="text" id="difficulty_level" name="difficulty_level" required><br><br>
+
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" required></textarea><br><br>
+
+        <input type="submit" value="Add_Plan">
+    </form>
+
+    <a href="{{ url_for('exercise_plans') }}">Go back to Exercise Plans</a>
+    <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+</body>
+</html>

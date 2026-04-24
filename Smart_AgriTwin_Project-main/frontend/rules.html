@@ -1,0 +1,334 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Rule Engine — Smart AgriTwin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background:#f4f6f9;
+      padding-top:90px;
+      font-family:Inter, sans-serif;
+    }
+    .card {
+      border-radius:12px;
+      box-shadow:0 4px 16px rgba(0,0,0,0.06);
+    }
+    .nav-link { color:#fff !important; }
+    .container-narrow {
+      max-width:1100px;
+      margin:auto;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/static/dashboard.html">🌱 Smart AgriTwin</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navRules">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navRules">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="/static/dashboard.html">🏡 Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/devices.html">🔌 Devices</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/commands.html">🖥️ Commands</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/static/rules.html">⚙️ Rules</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/alerts.html">🚨 Alerts</a></li>
+      </ul>
+
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <span id="username-label" class="navbar-text text-white me-3"></span>
+        </li>
+        <li class="nav-item">
+          <button class="btn btn-outline-light btn-sm" id="logoutRules">Logout</button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE CONTENT -->
+<div class="container-narrow mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Rule Engine</h2>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Create Rule</button>
+  </div>
+
+  <div id="rulesList" class="row g-3"></div>
+</div>
+
+<!-- CREATE RULE MODAL -->
+<div class="modal fade" id="addRuleModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Create Rule</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <label>Farm</label>
+        <select id="farmSelect" class="form-select mb-2"></select>
+
+        <label>Zone</label>
+        <select id="zoneSelect" class="form-select mb-2"></select>
+
+        <label>Device</label>
+        <select id="deviceSelect" class="form-select mb-3"></select>
+
+        <label>Condition</label>
+        <div class="row mb-3">
+          <div class="col">
+            <select id="sensorField" class="form-select">
+              <option value="temperature">Temperature</option>
+              <option value="humidity">Humidity</option>
+              <option value="soil_moisture">Soil Moisture</option>
+            </select>
+          </div>
+
+          <div class="col">
+            <select id="operator" class="form-select">
+              <option value=">">&gt;</option>
+              <option value="<">&lt;</option>
+              <option value="==">==</option>
+              <option value=">=">&gt;=</option>
+              <option value="<=">&lt;=</option>
+            </select>
+          </div>
+
+          <div class="col">
+            <input id="threshold" class="form-control" placeholder="Value">
+          </div>
+        </div>
+
+        <label>Action</label>
+        <select id="actionSelect" class="form-select">
+          <option value="alert">Send Alert</option>
+          <option value="command:pump_on">Command: Pump ON</option>
+          <option value="command:pump_off">Command: Pump OFF</option>
+        </select>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="createRuleBtn">Create</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------
+   AUTH SETUP
+---------------------------- */
+const token = localStorage.getItem('token');
+const username = localStorage.getItem('username') || '';
+
+if (!token) location.href = '/static/login.html';
+document.getElementById("username-label").innerText = username;
+
+document.getElementById("logoutRules").addEventListener("click", () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  location.href = "/static/login.html";
+});
+
+
+/* ---------------------------
+   LOAD RULES
+---------------------------- */
+async function loadRules() {
+  const res = await fetch("/api/rules/", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const rules = await res.json();
+  const container = document.getElementById("rulesList");
+  container.innerHTML = "";
+
+  if (!rules.length) {
+    container.innerHTML = `<p class="text-muted">No rules created.</p>`;
+    return;
+  }
+
+  rules.forEach(r => {
+    container.innerHTML += `
+      <div class="col-md-6">
+        <div class="card p-3">
+          <h5>${r.name}</h5>
+          <p class="text-muted small">Condition: ${r.condition}</p>
+          <p>Action: ${r.action} • <strong>${r.enabled ? "Enabled" : "Disabled"}</strong></p>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteRule(${r.id})">
+              Delete
+            </button>
+
+            <button class="btn btn-sm btn-outline-secondary"
+              onclick="toggleRule(${r.id}, ${r.enabled})">
+              ${r.enabled ? "Disable" : "Enable"}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
+loadRules();
+
+
+/* ---------------------------
+   CREATE RULE
+---------------------------- */
+function openAddModal() {
+  loadFarms();
+  new bootstrap.Modal(document.getElementById("addRuleModal")).show();
+}
+
+async function loadFarms() {
+  const res = await fetch("/api/farms/", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const farms = await res.json();
+  const sel = document.getElementById("farmSelect");
+
+  sel.innerHTML = "";
+  farms.forEach(f => sel.innerHTML += `<option value="${f.id}">${f.name}</option>`);
+
+  loadZones();
+}
+
+async function loadZones() {
+  const farmId = document.getElementById("farmSelect").value;
+
+  const res = await fetch(`/api/zones/?farm_id=${farmId}`, {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const zones = await res.json();
+  const sel = document.getElementById("zoneSelect");
+
+  sel.innerHTML = "";
+  zones.forEach(z => sel.innerHTML += `<option value="${z.id}">${z.name}</option>`);
+
+  loadDevices();
+}
+
+async function loadDevices() {
+  const zoneId = document.getElementById("zoneSelect").value;
+
+  const res = await fetch(`/api/devices/?zone_id=${zoneId}`, {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const devices = await res.json();
+  const sel = document.getElementById("deviceSelect");
+
+  sel.innerHTML = "";
+  devices.forEach(d => sel.innerHTML += `<option value="${d.id}">${d.device_uid}</option>`);
+}
+
+document.getElementById("farmSelect").addEventListener("change", loadZones);
+document.getElementById("zoneSelect").addEventListener("change", loadDevices);
+
+document.getElementById("createRuleBtn").addEventListener("click", async () => {
+
+  const zoneId = Number(document.getElementById("zoneSelect").value);
+  const field = document.getElementById("sensorField").value;
+  const operator = document.getElementById("operator").value;
+  const threshold = Number(document.getElementById("threshold").value);
+  const action = document.getElementById("actionSelect").value;
+
+  /* -----------------
+     FIXED CONDITION
+  ------------------ */
+  const conditionObj = {
+    field: field,     // FIX #1
+    op: operator,
+    value: threshold
+  };
+
+  const body = {
+    name: `Auto ${field} ${operator} ${threshold}`,
+    condition: JSON.stringify(conditionObj),
+    action,
+    zone_id: zoneId
+  };
+
+  const res = await fetch("/api/rules/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (res.ok) {
+    alert("Rule created!");
+    loadRules();
+    bootstrap.Modal.getInstance(document.getElementById("addRuleModal")).hide();
+  } else {
+    alert("Failed to create rule.");
+  }
+});
+
+
+/* ---------------------------
+   DELETE RULE
+---------------------------- */
+async function deleteRule(id) {
+  if (!confirm("Delete this rule?")) return;
+
+  const res = await fetch(`/api/rules/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  if (res.ok) {
+    loadRules();
+  } else {
+    alert("Failed to delete rule.");
+  }
+}
+
+
+/* ---------------------------
+   ENABLE / DISABLE RULE
+---------------------------- */
+async function toggleRule(id, enabled) {
+  const res = await fetch(`/api/rules/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ enabled: !enabled })
+  });
+
+  if (res.ok) {
+    loadRules();
+  } else {
+    alert("Failed to update rule.");
+  }
+}
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

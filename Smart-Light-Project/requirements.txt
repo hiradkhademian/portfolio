@@ -1,0 +1,26 @@
+# Core web framework
+Flask==2.2.2
+
+# ORM for database management
+Flask-SQLAlchemy==3.0.2
+
+# Load configuration from .env files (for managing secret keys, database URIs, etc.)
+python-dotenv==0.21.0
+
+# For real-time bidirectional communication (WebSockets)
+Flask-SocketIO==5.3.0
+
+# Asynchronous worker for Flask-SocketIO (using eventlet)
+eventlet==0.33.0
+
+# A production-ready WSGI server to deploy your Flask app
+gunicorn==20.1.0
+
+# WSGI utility library
+Werkzeug==2.2.3
+
+# For scheduling tasks and automations
+APScheduler==3.9.1
+
+
+#pip install -r requirements.txt

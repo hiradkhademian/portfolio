@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Request Mentorship</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='mentorship.css') }}">
+</head>
+<body>
+
+<header>
+    <h1>Request Mentorship</h1>
+</header>
+
+<section id="mentorship-request">
+    <h2>Connect with {{ mentor.name }}</h2>
+    <p>Specialty: {{ mentor.specialty }}</p>
+    <p>Experience: {{ mentor.experience_years }} years</p>
+
+    <form action="{{ url_for('request_mentorship', mentor_id=mentor.id) }}" method="POST">
+        <label for="email">Your Email:</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="message">Why do you want mentorship?</label>
+        <textarea id="message" name="message" rows="4" required></textarea>
+
+        <label for="preferred_contact">Preferred Contact Method:</label>
+        <select id="preferred_contact" name="preferred_contact">
+            <option value="email">Email</option>
+            <option value="phone">Phone</option>
+            <option value="video_call">Video Call</option>
+        </select>
+
+        <button type="submit">Send Request</button>
+    </form>
+</section>
+
+<a href="{{ url_for('find_mentor') }}" class="back-button">Back to Find a Mentor</a>
+<a href="{{ url_for('index') }}" class="back-button">⬅️ Back to Home</a>
+</body>
+</html>

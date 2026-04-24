@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mental Health Support for MS Patients</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f4f7;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #145a8d;
+      text-align: center;
+    }
+    h2 {
+      color: #2e86c1;
+    }
+    ul {
+      list-style-type: disc;
+      padding-left: 20px;
+    }
+    a.back-button {
+      display: block;
+      margin: 30px auto 0;
+      text-align: center;
+      padding: 12px 24px;
+      background-color: #145a8d;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      width: fit-content;
+    }
+    a.back-button:hover {
+      background-color: #2e86c1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Mental Health Support for People with MS</h1>
+
+  <h2>Why Mental Health Matters with MS</h2>
+  <p>
+    Living with Multiple Sclerosis can be emotionally challenging. Stress, anxiety, depression, and fatigue are common.
+    Getting support for your mental health is just as important as managing physical symptoms.
+  </p>
+
+  <h2>Resources Available</h2>
+  <ul>
+    <li><strong>National MS Society:</strong> Offers free counseling referrals and peer support programs.</li>
+    <li><strong>Counseling Services:</strong> Access licensed therapists who specialize in chronic illness.</li>
+    <li><strong>Mindfulness Exercises:</strong> Guided meditations and breathing techniques to reduce stress.</li>
+    <li><strong>Support Groups:</strong> Join online communities where people share their experiences and coping strategies.</li>
+    <li><strong>Crisis Hotlines:</strong> For urgent emotional support or distress.</li>
+  </ul>
+
+  <h2>How to Get Help</h2>
+  <p>You can reach out through:</p>
+  <ul>
+    <li>Your neurologist or primary care provider</li>
+    <li>The National MS Society Helpline: <a href="https://www.nationalmssociety.org">Visit Website</a></li>
+    <li>Therapy platforms like BetterHelp or Talkspace</li>
+    <li>Local mental health clinics or telemedicine services</li>
+  </ul>
+
+  <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Your Symptom Logs</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='symptom_viewer.css') }}">
+</head>
+<body>
+  <h2>Symptom & Mood Logs</h2>
+  {% if logs %}
+    <ul>
+      {% for log in logs %}
+        <li>
+          {{ log.date }} - Fatigue: {{ log.fatigue_level }}, Pain: {{ log.pain_level }}, Mood: {{ log.mood }}
+          <p>{{ log.notes }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No logs found. Start tracking today!</p>
+  {% endif %}
+
+  <a href="{{ url_for('track_symptoms') }}">➕ Add New Log</a>
+  <a href="{{ url_for('index') }}">Back to Home</a>
+</body>
+</html>

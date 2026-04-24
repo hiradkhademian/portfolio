@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mindfulness & Wellness</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f4f7; padding: 20px; }
+    .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; }
+    h1 { text-align: center; color: #145a8d; }
+    .exercise { margin-bottom: 30px; }
+    button { padding: 10px 20px; background: #2e86c1; color: white; border: none; border-radius: 5px; }
+    iframe { width: 100%; height: 300px; margin-top: 10px; }
+    .back-button {
+      display: block;
+      margin: 20px auto;
+      text-align: center;
+      padding: 10px 20px;
+      background-color: #145a8d;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      width: fit-content;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Mindfulness & Relaxation Tools</h1>
+
+  <div class="exercise">
+    <h3>🧘‍♀️ Guided Breathing Exercise</h3>
+    <p>Follow along with this short guided breathing exercise to reduce stress:</p>
+    <iframe id="videoPlayer" src="https://www.youtube.com/embed/abc123" frameborder="0" allowfullscreen></iframe>
+  </div>
+
+  <div class="exercise">
+    <h3>🎵 Find Relaxing Sounds</h3>
+    <button onclick="loadVideo('nature')">Nature Sounds</button>
+    <button onclick="loadVideo('music')">Peaceful Music</button>
+    <button onclick="loadVideo('breathing')">Breathing Exercises</button>
+    <button onclick="retryVideo()">Retry</button>
+  </div>
+
+  <div class="exercise">
+    <h3>🧠 Daily Mood Tracker</h3>
+    <p>How are you feeling today?</p>
+    <select onchange="trackMood(this.value)">
+      <option value="">Select your mood...</option>
+      <option value="Happy">😊 Happy</option>
+      <option value="Neutral">😐 Neutral</option>
+      <option value="Sad">😢 Sad</option>
+    </select>
+    <p id="moodStatus"></p>
+  </div>
+
+  <script>
+    let currentVideoCategory = '';
+
+    function loadVideo(category) {
+      currentVideoCategory = category;
+      
+      let videoURL = '';
+      switch (category) {
+        case 'nature':
+          videoURL = 'https://www.youtube.com/embed/lE6RYpe9IT0'; // Corrected Nature Sound URL
+          break;
+        case 'music':
+          videoURL = 'https://www.youtube.com/embed/LFASWuckB1c'; // Corrected Peaceful Music URL
+          break;
+        case 'breathing':
+          videoURL = 'https://www.youtube.com/embed/LiUnFJ8P4gM'; // Corrected Breathing Exercise URL
+          break;
+        default:
+          videoURL = 'https://www.youtube.com/embed/abc123'; // Default video URL
+          break;
+      }
+      document.getElementById("videoPlayer").src = videoURL;
+    }
+
+    function retryVideo() {
+      loadVideo(currentVideoCategory); // Retry loading the same category
+    }
+
+    function trackMood(mood) {
+      document.getElementById("moodStatus").textContent = "You selected: " + mood;
+      localStorage.setItem("lastMood", mood);
+    }
+  </script>
+
+  <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+</div>
+</body>
+</html>
