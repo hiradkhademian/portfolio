@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Konum Takip</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; width: 100vw; height: 100vh; overflow: hidden; }
+    #map { width: 100vw; height: 100vh; }
+    #profile-card {
+      position: absolute; top: 16px; left: 16px; z-index: 1000;
+      background: rgba(255,255,255,0.96); border-radius: 12px;
+      padding: 16px 20px; min-width: 220px; max-width: 280px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18); border-left: 4px solid #e53e3e;
+    }
+    #profile-card h2 {
+      font-size: 16px; font-weight: 700; color: #1a1a1a;
+      margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    }
+    .live-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #e53e3e; flex-shrink: 0; animation: pulse 1.5s infinite;
+    }
+    .profile-row {
+      display: flex; justify-content: space-between;
+      font-size: 13px; padding: 5px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .profile-row:last-child { border-bottom: none; }
+    .profile-label { color: #888; font-weight: 500; }
+    .profile-value { font-weight: 600; color: #1a1a1a; text-align: right; }
+    #status-bar {
+      position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; background: rgba(0,0,0,0.72); color: #fff;
+      padding: 8px 20px; border-radius: 20px; font-size: 13px;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<div id="profile-card">
+  <h2><div class="live-dot"></div><span id="full-name">—</span></h2>
+  <div id="profile-rows"></div>
+</div>
+<div id="status-bar">Demo modu</div>
+<script>
+  const SHARE_ID = new URLSearchParams(location.search).get('id') || 'DEMO';
+  const API_BASE = '/api';
+  const POLL_MS  = 3000;
+
+  // DEMO — backend bağlanınca bu iki satırı sil
+  const DEMO_PROFILE  = { firstName: 'Ahmet', lastName: 'Yılmaz', age: 34, bloodType: 'A Rh+', conditions: 'Astım, Hipertansiyon' };
+  const DEMO_LOCATION = { lat: 39.9208, lng: 32.8541 };
+
+  const map = L.map('map', { zoomControl: false });
+  L.control.zoom({ position: 'topright' }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors', maxZoom: 19
+  }).addTo(map);
+
+  const redIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:18px;height:18px;background:#e53e3e;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',
+    iconSize: [18, 18], iconAnchor: [9, 9]
+  });
+
+  let marker = null;
+
+  async function loadProfile() {
+    let p;
+    try {
+      const res = await fetch(API_BASE + '/share/' + SHARE_ID + '/profile');
+      if (!res.ok) throw new Error();
+      p = await res.json();
+    } catch { p = DEMO_PROFILE; }
+
+    document.getElementById('full-name').textContent = p.firstName + ' ' + p.lastName;
+    document.getElementById('profile-rows').innerHTML = [
+      { label: 'Yaş',         value: p.age        || '—' },
+      { label: 'Kan Grubu',   value: p.bloodType  || '—' },
+      { label: 'Hastalıklar', value: p.conditions || 'Yok' }
+    ].map(function(f) {
+      return '<div class="profile-row"><span class="profile-label">' + f.label + '</span><span class="profile-value">' + f.value + '</span></div>';
+    }).join('');
+  }
+
+  async function updateLocation() {
+    let loc;
+    try {
+      const res = await fetch(API_BASE + '/share/' + SHARE_ID + '/location');
+      if (!res.ok) throw new Error();
+      loc = await res.json();
+      document.getElementById('status-bar').textContent = 'Canli · ' + new Date(loc.timestamp).toLocaleTimeString('tr-TR');
+    } catch {
+      loc = DEMO_LOCATION;
+      document.getElementById('status-bar').textContent = 'Demo modu';
+    }
+
+    var latlng = [loc.lat, loc.lng];
+    if (!marker) {
+      marker = L.marker(latlng, { icon: redIcon }).addTo(map);
+      map.setView(latlng, 15);
+    } else {
+      marker.setLatLng(latlng);
+    }
+  }
+
+  loadProfile();
+  updateLocation();
+  setInterval(updateLocation, POLL_MS);
+</script>
+</body>
+</html>
