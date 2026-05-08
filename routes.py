@@ -114,7 +114,6 @@ def trigger_emergency():
     user_id = _current_user_id()
     latitude = data.get('latitude')
     longitude = data.get('longitude')
-    tracking_url = f"http://127.0.0.1:5000/?id={user.id}"
 
     errors = {}
     if latitude is None:
@@ -135,6 +134,8 @@ def trigger_emergency():
             "success": False,
             "message": "User not found"
         }), 404
+
+    tracking_url = f"http://127.0.0.1:5000/?id={user.id}"
 
     emergency = Emergency(
         user_id=user_id,
