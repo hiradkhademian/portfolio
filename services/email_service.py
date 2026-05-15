@@ -36,6 +36,7 @@ def send_emergency_alerts(user, contacts, emergency):
             continue
 
         try:
+            print(f"DEBUG sending emergency alert to {contact.email}")
             message = EmailMessage()
             message["Subject"] = subject
             message["From"] = email_user
@@ -45,5 +46,6 @@ def send_emergency_alerts(user, contacts, emergency):
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
                 smtp.login(email_user, email_pass)
                 smtp.send_message(message)
+            print(f"DEBUG email sent to {contact.email}")
         except Exception as exc:
             print(f"Failed to send alert to {contact.email}: {exc}")

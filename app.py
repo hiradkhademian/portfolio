@@ -14,10 +14,10 @@ def create_app():
 
     # Mac/Windows compatible pathing for SQLite
     basedir = os.path.abspath(os.path.dirname(__file__))
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'emergency.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(basedir, 'emergency.db'))
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = 'dev-key-123' # for later
-    app.config['JWT_SECRET_KEY'] = 'super-secret-key-change-later'
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-123')
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'super-secret-key-change-later')
 
     # Extensions
     db.init_app(app)
@@ -26,6 +26,7 @@ def create_app():
 
     @jwt.unauthorized_loader
     def _jwt_unauthorized(_callback):
+        print('DEBUG JWT unauthorized access')
         return jsonify({
             "success": False,
             "message": "Missing or invalid token"
@@ -49,6 +50,10 @@ def create_app():
     def tracker():
         return send_from_directory('.', 'tracker.html')
 
+    @app.route('/tracker')
+    def tracker_page():
+        return send_from_directory('.', 'tracker.html')
+
     @app.route('/admin')
     def admin():
         return send_from_directory('.', 'admin.html')
@@ -64,4 +69,7 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    socketio.run(app, host='0.0.0.0', debug=True, port=5000)
+    host = os.getenv('HOST', '0.0.0.0')
+    port = int(os.getenv('PORT', 5001))
+    debug = os.getenv('DEBUG', 'True').lower() in ('1', 'true', 'yes')
+    socketio.run(app, host=host, port=port, debug=debug)

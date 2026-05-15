@@ -1,3 +1,5 @@
+import os
+import webbrowser
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
     create_access_token,
@@ -23,14 +25,27 @@ def register_user():
 
     full_name = (data.get('full_name') or '').strip()
     email = (data.get('email') or '').strip().lower()
-    phone = (data.get('phone') or '').strip() or None
+    phone = (data.get('phone') or '').strip()
+    tc_no = (data.get('tc_no') or '').strip()
     password = data.get('password') or ''
 
+    blood_type = (data.get('blood_type') or '').strip()
+    diseases = (data.get('diseases') or '').strip()
+    birth_date = (data.get('birth_date') or '').strip()
+    gender = (data.get('gender') or '').strip()
+    emergency_email_1 = (data.get('emergency_email_1') or '').strip().lower()
+    emergency_email_2 = (data.get('emergency_email_2') or '').strip().lower()
+
     errors = {}
+
     if not full_name:
         errors['full_name'] = 'Full name is required.'
     if not email:
         errors['email'] = 'Email is required.'
+    if not phone:
+        errors['phone'] = 'Phone number is required.'
+    if not tc_no:
+        errors['tc_no'] = 'TC number is required.'
     if not password:
         errors['password'] = 'Password is required.'
 
@@ -41,21 +56,59 @@ def register_user():
             "errors": errors
         }), 400
 
-    existing_user = User.query.filter_by(email=email).first()
-    if existing_user:
+    if User.query.filter_by(email=email).first():
         return jsonify({
             "success": False,
             "message": "Email already exists"
         }), 400
 
+    if User.query.filter_by(phone=phone).first():
+        return jsonify({
+            "success": False,
+            "message": "Phone number already exists"
+        }), 400
+
+    if User.query.filter_by(tc_no=tc_no).first():
+        return jsonify({
+            "success": False,
+            "message": "TC number already exists"
+        }), 400
+
     hashed_password = generate_password_hash(password)
+
     user = User(
         full_name=full_name,
         email=email,
         phone=phone,
-        password=hashed_password
+        tc_no=tc_no,
+        password=hashed_password,
+        blood_type=blood_type,
+        diseases=diseases,
+        birth_date=birth_date,
+        gender=gender,
+        emergency_email_1=emergency_email_1,
+        emergency_email_2=emergency_email_2
     )
+
     db.session.add(user)
+    db.session.commit()
+
+    if emergency_email_1:
+        db.session.add(Contact(
+            name='Emergency Contact 1',
+            phone_number=None,
+            email=emergency_email_1,
+            user_id=user.id
+        ))
+
+    if emergency_email_2:
+        db.session.add(Contact(
+            name='Emergency Contact 2',
+            phone_number=None,
+            email=emergency_email_2,
+            user_id=user.id
+        ))
+
     db.session.commit()
 
     return jsonify({
@@ -109,6 +162,10 @@ def login_user():
 @api.route('/emergency/trigger', methods=['POST'])
 @jwt_required()
 def trigger_emergency():
+    print('DEBUG /api/emergency/trigger called')
+    print('DEBUG request headers:', dict(request.headers))
+    print('DEBUG request body:', request.get_data(as_text=True))
+
     data = request.get_json(silent=True) or {}
 
     user_id = _current_user_id()
@@ -135,8 +192,6 @@ def trigger_emergency():
             "message": "User not found"
         }), 404
 
-    tracking_url = f"http://127.0.0.1:5000/?id={user.id}"
-
     emergency = Emergency(
         user_id=user_id,
         latitude=latitude,
@@ -146,7 +201,35 @@ def trigger_emergency():
     db.session.add(emergency)
     db.session.commit()
 
+    tracking_base = os.getenv('TRACKING_URL_BASE')
+    if tracking_base:
+        tracking_url = f"{tracking_base.rstrip('/')}/?emergency_id={emergency.id}"
+    else:
+        tracking_url = f"{request.host_url.rstrip('/')}/?emergency_id={emergency.id}"
+
     user_contacts = Contact.query.filter_by(user_id=user_id).all()
+    print(f"DEBUG user_contacts from DB: {[c.email for c in user_contacts]}")
+
+    contact_emails = {contact.email for contact in user_contacts if contact.email}
+    if user.emergency_email_1 and user.emergency_email_1 not in contact_emails:
+        user_contacts.append(Contact(
+            name='Emergency Contact 1',
+            email=user.emergency_email_1,
+            phone_number=None,
+            user_id=user_id
+        ))
+        contact_emails.add(user.emergency_email_1)
+    if user.emergency_email_2 and user.emergency_email_2 not in contact_emails:
+        user_contacts.append(Contact(
+            name='Emergency Contact 2',
+            email=user.emergency_email_2,
+            phone_number=None,
+            user_id=user_id
+        ))
+        contact_emails.add(user.emergency_email_2)
+
+    print(f"DEBUG final contacts: {[c.email for c in user_contacts]}")
+
     send_emergency_alerts(user, user_contacts, emergency)
 
     # Frontend can listen in real-time with: socket.on("new_emergency", ...)
@@ -162,6 +245,14 @@ def trigger_emergency():
         },
         "status": emergency.status
     })
+
+    # Open browser to the admin page served by Flask
+    try:
+        host = request.host_url.rstrip('/')
+        admin_url = f"{host}/admin"
+        webbrowser.open(admin_url)
+    except Exception as e:
+        print(f"Failed to open browser: {e}")
 
     return jsonify({
         "success": True,
@@ -220,6 +311,86 @@ def update_emergency_status(emergency_id):
         }
     }), 200
 
+
+@api.route('/emergency/<int:emergency_id>', methods=['GET'])
+def get_emergency(emergency_id):
+    emergency = Emergency.query.get(emergency_id)
+    if not emergency:
+        return jsonify({
+            "success": False,
+            "message": "Emergency not found"
+        }), 404
+
+    user = User.query.get(emergency.user_id)
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": "User not found"
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "emergency": {
+            "id": emergency.id,
+            "latitude": emergency.latitude,
+            "longitude": emergency.longitude,
+            "status": emergency.status,
+            "timestamp": emergency.timestamp.isoformat() if emergency.timestamp else None
+        },
+        "user": {
+            "id": user.id,
+            "full_name": user.full_name,
+            "email": user.email,
+            "blood_type": user.blood_type,
+            "diseases": user.diseases
+        }
+    }), 200
+
+
+@api.route('/emergency/<int:emergency_id>/location', methods=['PUT'])
+@jwt_required()
+def update_emergency_location(emergency_id):
+    user_id = _current_user_id()
+    data = request.get_json(silent=True) or {}
+
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+
+    errors = {}
+    if latitude is None:
+        errors['latitude'] = 'Latitude is required.'
+    if longitude is None:
+        errors['longitude'] = 'Longitude is required.'
+
+    if errors:
+        return jsonify({
+            "success": False,
+            "message": "Validation failed",
+            "errors": errors
+        }), 400
+
+    emergency = Emergency.query.get(emergency_id)
+    if not emergency or emergency.user_id != user_id:
+        return jsonify({
+            "success": False,
+            "message": "Emergency not found"
+        }), 404
+
+    emergency.latitude = latitude
+    emergency.longitude = longitude
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Emergency location updated successfully",
+        "emergency": {
+            "id": emergency.id,
+            "latitude": emergency.latitude,
+            "longitude": emergency.longitude
+        }
+    }), 200
+
+
 @api.route('/admin/sharers', methods=['GET'])
 def admin_sharers():
     emergencies = Emergency.query.filter_by(status='active').all()
@@ -234,10 +405,24 @@ def admin_sharers():
         first_name = names[0]
         last_name = names[1] if len(names) > 1 else ""
 
+        # Calculate age if birth_date is available
+        age = None
+        if user.birth_date:
+            from datetime import datetime
+            try:
+                birth = datetime.strptime(user.birth_date, '%Y-%m-%d')
+                age = datetime.now().year - birth.year - ((datetime.now().month, datetime.now().day) < (birth.month, birth.day))
+            except:
+                pass
+
         data.append({
             "id": str(user.id),
+            "emergency_id": emergency.id,
             "firstName": first_name,
             "lastName": last_name,
+            "age": age,
+            "bloodType": user.blood_type,
+            "conditions": user.diseases,
             "lat": emergency.latitude,
             "lng": emergency.longitude
         })

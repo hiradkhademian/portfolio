@@ -159,7 +159,7 @@
 <!-- Sol panel -->
 <div id="sidebar">
   <div id="sidebar-header">
-    <h1>📍 Admin Paneli</h1>
+    <h1>� Acil Durum Paneli</h1>
     <p id="share-count">Yükleniyor…</p>
   </div>
   <div id="user-list">
@@ -177,7 +177,7 @@
   // Backend endpoint'lerin:
   // GET /api/admin/sharers  → [{ id, firstName, lastName, age, bloodType, conditions, lat, lng, timestamp }, …]
   const API_BASE = '/api';
-  const POLL_MS  = 4000;
+  const POLL_MS  = 3000;
 
   // Admin için basit renk paleti (her kullanıcıya farklı renk)
   const COLORS = [
@@ -229,7 +229,7 @@
   }
 
   function applyData(users) {
-    const activeIds = new Set(users.map(u => u.id));
+    const activeIds = new Set(users.map(u => u.emergency_id));
 
     // Gidenleri kaldır
     for (const id of Object.keys(state)) {
@@ -239,27 +239,39 @@
       }
     }
 
+    const bounds = [];
+
     users.forEach((u, i) => {
       const color   = COLORS[i % COLORS.length];
       const latlng  = [u.lat, u.lng];
-      const highlighted = (u.id === selectedId);
+      const highlighted = (u.emergency_id === selectedId);
 
-      if (!state[u.id]) {
+      bounds.push(latlng);
+
+      if (!state[u.emergency_id]) {
         // Yeni marker
         const marker = L.marker(latlng, { icon: makeIcon(color, highlighted) })
           .addTo(map)
-          .on('click', () => selectUser(u.id));
-        state[u.id] = { marker, color, data: u };
+          .on('click', () => selectUser(u.emergency_id));
+        state[u.emergency_id] = { marker, color, data: u };
       } else {
-        state[u.id].marker.setLatLng(latlng);
-        state[u.id].marker.setIcon(makeIcon(color, highlighted));
-        state[u.id].data = u;
+        state[u.emergency_id].marker.setLatLng(latlng);
+        state[u.emergency_id].marker.setIcon(makeIcon(color, highlighted));
+        state[u.emergency_id].data = u;
       }
     });
 
+    if (bounds.length > 0) {
+      if (bounds.length === 1) {
+        map.setView(bounds[0], 14, { animate: true });
+      } else {
+        map.fitBounds(bounds, { padding: [60, 60] });
+      }
+    }
+
     renderSidebar(users);
     document.getElementById('share-count').textContent =
-      `${users.length} aktif paylaşım`;
+      `${users.length} aktif acil durum`;
     document.getElementById('loading').style.display = 'none';
   }
 
@@ -268,10 +280,10 @@
     const list = document.getElementById('user-list');
     list.innerHTML = users.map((u, i) => {
       const color = COLORS[i % COLORS.length];
-      const isActive = u.id === selectedId;
+      const isActive = u.emergency_id === selectedId;
       return `
         <div class="user-item ${isActive ? 'active' : ''}"
-             onclick="selectUser('${u.id}')">
+             onclick="selectUser('${u.emergency_id}')">
           <div class="marker-dot" style="background:${color}"></div>
           <div class="user-info">
             <h3>${u.firstName} ${u.lastName}</h3>
@@ -287,7 +299,7 @@
   }
 
   // ── Kullanıcı seç ───────────────────────────────────────────────────────────
-  function selectUser(id) {
+  function selectUser(emergencyId) {
     // Eski highlight kaldır
     if (selectedId && state[selectedId]) {
       state[selectedId].marker.setIcon(
@@ -295,7 +307,7 @@
       );
     }
 
-    selectedId = (selectedId === id) ? null : id;
+    selectedId = (selectedId === emergencyId) ? null : emergencyId;
 
     if (selectedId && state[selectedId]) {
       state[selectedId].marker.setIcon(
@@ -311,6 +323,11 @@
       const items = document.querySelectorAll('.user-item');
       const idx   = Object.keys(state).indexOf(selectedId);
       if (items[idx]) items[idx].classList.add('active');
+    }
+
+    // Open tracker for this emergency
+    if (selectedId) {
+      window.open(`/tracker?emergency_id=${selectedId}`, '_blank');
     }
   }
 

@@ -10,7 +10,9 @@ import {
   Alert,
 } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
+import {BASE_URL} from '../services/api';
 import type {User} from '../../App';
 
 type Props = {
@@ -40,6 +42,10 @@ export default function HomeScreen({user, onUpdateUser, onLogout}: Props) {
   const [isSharing, setIsSharing] = useState(false);
   const [sharingSeconds, setSharingSeconds] = useState(0);
   const [locationLink, setLocationLink] = useState('');
+  const [emergencyTriggered, setEmergencyTriggered] = useState(false);
+  const [currentEmergencyId, setCurrentEmergencyId] = useState<number | null>(null);
+  const emergencyTriggeredRef = useRef(false);
+  const currentEmergencyIdRef = useRef<number | null>(null);
 
   const countdownIntervalRef =
     useRef<ReturnType<typeof setInterval> | null>(null);
@@ -146,12 +152,60 @@ export default function HomeScreen({user, onUpdateUser, onLogout}: Props) {
     }, 1000);
 
     locationWatchIdRef.current = Geolocation.watchPosition(
-      position => {
+      async position => {
         const {latitude, longitude} = position.coords;
         const googleMapsLink =
           `https://www.google.com/maps?q=${latitude},${longitude}`;
 
         setLocationLink(googleMapsLink);
+
+        if (!emergencyTriggeredRef.current) {
+          emergencyTriggeredRef.current = true;
+          setEmergencyTriggered(true);
+          try {
+            const token = await AsyncStorage.getItem('authToken');
+            const response = await fetch(`${BASE_URL}/emergency/trigger`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                latitude,
+                longitude,
+              }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+              setCurrentEmergencyId(data.emergency.id);
+              currentEmergencyIdRef.current = data.emergency.id;
+              Alert.alert('Emergency Alert Sent', 'Help is on the way!');
+            } else {
+              Alert.alert('Error', data.message || 'Failed to send emergency alert');
+            }
+          } catch (error) {
+            console.log('Emergency trigger error:', error);
+            Alert.alert('Error', 'Failed to send emergency alert');
+          }
+        } else if (currentEmergencyIdRef.current) {
+          try {
+            const token = await AsyncStorage.getItem('authToken');
+            await fetch(`${BASE_URL}/emergency/${currentEmergencyIdRef.current}/location`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                latitude,
+                longitude,
+              }),
+            });
+          } catch (error) {
+            console.log('Location update error:', error);
+          }
+        }
       },
       error => {
         console.log('Location Error:', error);
@@ -174,6 +228,10 @@ export default function HomeScreen({user, onUpdateUser, onLogout}: Props) {
     setIsSharing(false);
     setSharingSeconds(0);
     setLocationLink('');
+    setEmergencyTriggered(false);
+    setCurrentEmergencyId(null);
+    emergencyTriggeredRef.current = false;
+    currentEmergencyIdRef.current = null;
   };
 
   const saveProfile = () => {

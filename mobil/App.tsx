@@ -10,6 +10,14 @@ export type User = {
     full_name: string;
     email: string;
     phone: string;
+    password?: string;
+    tcNo?: string;
+    bloodType?: string;
+    diseases?: string;
+    birthDate?: string;
+    gender?: string;
+    emergencyEmail1?: string;
+    emergencyEmail2?: string;
 };
 
 type Screen = 'login' | 'register' | 'home';

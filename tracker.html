@@ -51,13 +51,29 @@
 </div>
 <div id="status-bar">Demo modu</div>
 <script>
-  const SHARE_ID = new URLSearchParams(location.search).get('id') || 'DEMO';
+  // Get emergency ID from URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const EMERGENCY_ID = urlParams.get('emergency_id');
   const API_BASE = '/api';
-  const POLL_MS  = 3000;
+  const POLL_MS = 3000;
 
-  // DEMO — backend bağlanınca bu iki satırı sil
-  const DEMO_PROFILE  = { firstName: 'Ahmet', lastName: 'Yılmaz', age: 34, bloodType: 'A Rh+', conditions: 'Astım, Hipertansiyon' };
-  const DEMO_LOCATION = { lat: 39.9208, lng: 32.8541 };
+  // Fallback demo data
+  const DEMO_EMERGENCY = {
+    emergency: {
+      id: 1,
+      latitude: 39.9208,
+      longitude: 32.8541,
+      status: 'active',
+      timestamp: new Date().toISOString()
+    },
+    user: {
+      id: 1,
+      full_name: 'Demo User',
+      email: 'demo@example.com',
+      blood_type: 'A+',
+      diseases: 'None'
+    }
+  };
 
   const map = L.map('map', { zoomControl: false });
   L.control.zoom({ position: 'topright' }).addTo(map);
@@ -73,48 +89,57 @@
 
   let marker = null;
 
-  async function loadProfile() {
-    let p;
+  async function loadEmergencyData() {
+    let data;
     try {
-      const res = await fetch(API_BASE + '/share/' + SHARE_ID + '/profile');
-      if (!res.ok) throw new Error();
-      p = await res.json();
-    } catch { p = DEMO_PROFILE; }
+      if (EMERGENCY_ID) {
+        const res = await fetch(`${API_BASE}/emergency/${EMERGENCY_ID}`);
+        if (!res.ok) throw new Error();
+        data = await res.json();
+        if (!data.success) throw new Error();
+        data = data;
+      } else {
+        throw new Error('No emergency ID');
+      }
+    } catch {
+      data = DEMO_EMERGENCY;
+      document.getElementById('status-bar').textContent = 'Demo modu - Emergency ID gerekli';
+    }
 
-    document.getElementById('full-name').textContent = p.firstName + ' ' + p.lastName;
+    // Update profile card
+    const user = data.user;
+    document.getElementById('full-name').textContent = user.full_name;
     document.getElementById('profile-rows').innerHTML = [
-      { label: 'Yaş',         value: p.age        || '—' },
-      { label: 'Kan Grubu',   value: p.bloodType  || '—' },
-      { label: 'Hastalıklar', value: p.conditions || 'Yok' }
+      { label: 'Email', value: user.email || '—' },
+      { label: 'Kan Grubu', value: user.blood_type || '—' },
+      { label: 'Hastalıklar', value: user.diseases || 'Yok' },
+      { label: 'Durum', value: data.emergency.status || '—' }
     ].map(function(f) {
       return '<div class="profile-row"><span class="profile-label">' + f.label + '</span><span class="profile-value">' + f.value + '</span></div>';
     }).join('');
-  }
 
-  async function updateLocation() {
-    let loc;
-    try {
-      const res = await fetch(API_BASE + '/share/' + SHARE_ID + '/location');
-      if (!res.ok) throw new Error();
-      loc = await res.json();
-      document.getElementById('status-bar').textContent = 'Canli · ' + new Date(loc.timestamp).toLocaleTimeString('tr-TR');
-    } catch {
-      loc = DEMO_LOCATION;
-      document.getElementById('status-bar').textContent = 'Demo modu';
-    }
+    // Update map
+    const emergency = data.emergency;
+    const latlng = [emergency.latitude, emergency.longitude];
 
-    var latlng = [loc.lat, loc.lng];
     if (!marker) {
       marker = L.marker(latlng, { icon: redIcon }).addTo(map);
       map.setView(latlng, 15);
     } else {
       marker.setLatLng(latlng);
+      map.panTo(latlng, { animate: true });
+    }
+
+    // Update status bar
+    if (EMERGENCY_ID) {
+      const timestamp = new Date(emergency.timestamp);
+      document.getElementById('status-bar').textContent = 'Acil Durum · ' + timestamp.toLocaleTimeString('tr-TR');
     }
   }
 
-  loadProfile();
-  updateLocation();
-  setInterval(updateLocation, POLL_MS);
+  // Load data immediately and then every 3 seconds
+  loadEmergencyData();
+  setInterval(loadEmergencyData, POLL_MS);
 </script>
 </body>
 </html>

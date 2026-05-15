@@ -22,6 +22,7 @@ const genders = ['Female', 'Male', 'Other'];
 export default function RegisterScreen({ goToLogin }: Props) {
     const [fullName, setFullName] = useState('');
     const [tcNo, setTcNo] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [email, setEmail] = useState('');
     const [emergencyEmail1, setEmergencyEmail1] = useState('');
     const [emergencyEmail2, setEmergencyEmail2] = useState('');
@@ -48,8 +49,11 @@ export default function RegisterScreen({ goToLogin }: Props) {
     };
 
     const handleTcChange = (text: string) => {
-        const onlyNumbers = text.replace(/[^0-9]/g, '');
-        setTcNo(onlyNumbers);
+        setTcNo(text.replace(/[^0-9]/g, ''));
+    };
+
+    const handlePhoneChange = (text: string) => {
+        setPhoneNumber(text.replace(/[^0-9]/g, ''));
     };
 
     const handleRegister = async () => {
@@ -62,6 +66,7 @@ export default function RegisterScreen({ goToLogin }: Props) {
         if (
             !cleanFullName ||
             !tcNo ||
+            !phoneNumber ||
             !cleanEmail ||
             !cleanPassword ||
             !bloodType ||
@@ -75,10 +80,7 @@ export default function RegisterScreen({ goToLogin }: Props) {
         }
 
         if (!/^[0-9]{11}$/.test(tcNo)) {
-            Alert.alert(
-                'Invalid TC ID',
-                'TC identity number must contain only numbers and must be 11 digits.',
-            );
+            Alert.alert('Invalid TC ID', 'TC identity number must be 11 digits.');
             return;
         }
 
@@ -88,13 +90,21 @@ export default function RegisterScreen({ goToLogin }: Props) {
             const response = await fetch(`${BASE_URL}/register`, {
                 method: 'POST',
                 headers: {
+                    Accept: 'application/json',
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     full_name: cleanFullName,
                     email: cleanEmail,
-                    phone: tcNo,
+                    phone: phoneNumber,
+                    tc_no: tcNo,
                     password: cleanPassword,
+                    blood_type: bloodType,
+                    diseases: diseases,
+                    birth_date: birthDate,
+                    gender: gender,
+                    emergency_email_1: cleanEmergencyEmail1,
+                    emergency_email_2: cleanEmergencyEmail2,
                 }),
             });
 
@@ -110,9 +120,8 @@ export default function RegisterScreen({ goToLogin }: Props) {
 
             Alert.alert('Success', 'Account created successfully!');
             goToLogin();
-        } catch (error) {
-            console.log('Register Error:', error);
-            Alert.alert('Connection Error', 'Backend connection failed.');
+        } catch (error: any) {
+            Alert.alert('Connection Error', String(error?.message || error));
         } finally {
             setLoading(false);
         }
@@ -142,6 +151,16 @@ export default function RegisterScreen({ goToLogin }: Props) {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+            />
+
+            <TextInput
+                style={styles.input}
+                placeholder="Phone Number"
+                placeholderTextColor="#aaa"
+                value={phoneNumber}
+                onChangeText={handlePhoneChange}
+                keyboardType="phone-pad"
+                maxLength={11}
             />
 
             <TextInput
