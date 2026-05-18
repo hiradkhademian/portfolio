@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nutrition & Diet Plans</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='nutrition.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Nutrition & Diet Plans</h1>
+    </header>
+
+    <section class="content">
+        <form action="{{ url_for('nutrition_plans') }}" method="POST">
+            <label for="diet">Preferred Diet Type:</label>
+            <select id="diet" name="diet" required>
+                <option value="">-- Select a Diet Type --</option>
+                <option value="mediterranean">Mediterranean Diet</option>
+                <option value="dairy_free">Dairy-Free</option>
+                <option value="gluten_free">Gluten-Free</option>
+                <option value="plant_based">Plant-Based</option>
+                <option value="ketogenic">Ketogenic</option>
+            </select>
+
+            <label for="calories">Calorie Range / Goals (optional):</label>
+            <input type="text" id="calories" name="calories" placeholder="e.g. 1500-1800">
+
+            <label for="allergies">Food Allergies/Restrictions (optional):</label>
+            <input type="text" id="allergies" name="allergies" placeholder="e.g. nuts, dairy">
+
+            <!-- Hidden field that stores the currently generated diet plan -->
+            <input type="hidden" id="current_diet_plan" name="current_diet_plan" value="{{ diet_plan|default('') }}">
+
+            <div class="button-group">
+                <button type="submit" name="action" value="get_diet">Get Diet Plan</button>
+                <button type="submit" name="action" value="generate_alternative">Generate Alternative</button>
+                <button type="submit" name="action" value="add_to_favorites">Add to Favorites</button>
+                <button type="submit" name="action" value="add_alternative_to_favorites">Add Alternative to Favorites</button>
+            </div>
+        </form>
+        
+        {% if diet_plan %}
+        <div class="results">
+            <h2>Your Recommended Diet Plan:</h2>
+            <pre>{{ diet_plan }}</pre>
+        </div>
+        {% endif %}
+        
+        {% if favorites %}
+        <div class="favorites">
+            <h2>Your Favorites:</h2>
+            <ul>
+                {% for plan in favorites %}
+                    <li><pre>{{ plan }}</pre></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </section>
+    <div>
+        <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+    </div>
+</body>
+</html>

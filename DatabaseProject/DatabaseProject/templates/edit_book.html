@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="edit-section">
+    <div class="edit-container">
+        <h2>Edit Book</h2>
+
+        <form method="POST"
+      action="{{ url_for('edit_book', book_id=book['id']) }}"
+      enctype="multipart/form-data">
+
+    <label>Title:</label>
+    <input type="text" name="title" value="{{ book['title'] }}" required>
+
+    <label>Author:</label>
+    <input type="text" name="author" value="{{ book['author'] }}" required>
+
+    <label>Price:</label>
+    <input type="number" step="0.01" name="price" value="{{ book['price'] }}" required>
+
+    <label>Stock:</label>
+    <input type="number" name="stock" value="{{ book['stock'] }}" required>
+
+    <label>Category:</label>
+    <select name="category" required>
+        <option value="Fantasy" {% if book['category']=='Fantasy' %}selected{% endif %}>Fantasy</option>
+        <option value="Science Fiction" {% if book['category']=='Science Fiction' %}selected{% endif %}>Science Fiction</option>
+        <option value="Horror" {% if book['category']=='Horror' %}selected{% endif %}>Horror</option>
+        <option value="Classics" {% if book['category']=='Classics' %}selected{% endif %}>Classics</option>
+        <option value="Mystery" {% if book['category']=='Mystery' %}selected{% endif %}>Mystery</option>
+        <option value="Young Adult" {% if book['category']=='Young Adult' %}selected{% endif %}>Young Adult</option>
+        <option value="General" {% if book['category']=='General' %}selected{% endif %}>General</option>
+    </select>
+
+    <label>Series (Optional):</label>
+    <input type="text" name="series" value="{{ book['series'] or '' }}">
+
+    <label>Current Cover:</label><br>
+    <img src="{{ url_for('static', filename='images/' + book['image']) }}" 
+         alt="Current Cover" width="100"><br><br>
+
+    <label>Upload New Cover:</label>
+    <input type="file" name="image">
+
+    <label>Description:</label>
+    <textarea name="description">{{ book['description'] }}</textarea>
+
+    <button type="submit" class="btn">Save Changes</button>
+    <a href="{{ url_for('admin') }}" class="btn secondary">Cancel</a>
+</form>
+
+    </div>
+</section>
+
+{% endblock %}

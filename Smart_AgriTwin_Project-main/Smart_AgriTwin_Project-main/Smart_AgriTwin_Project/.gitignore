@@ -1,0 +1,5 @@
+# Root virtual environment
+/.venv/
+
+# Backend app env file
+/backend/app/.env

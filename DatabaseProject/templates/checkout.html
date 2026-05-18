@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+
+    <section class="checkout-section">
+        <h2>Checkout</h2>
+
+        <form method="POST" class="checkout-form">
+
+            <h3>Your Information</h3>
+
+            <label>Name:</label>
+            <input type="text" value="{{ user_name }}" readonly>
+
+            <label>Email:</label>
+            <input type="text" value="{{ user_email }}" readonly>
+
+            <h3>Delivery Details</h3>
+
+            <label>Address:</label>
+            <textarea name="address" required></textarea>
+
+            <label>Phone:</label>
+            <input type="text" name="phone" required>
+
+            <label>Optional — Email Receipt To:</label>
+            <input type="email" name="receipt_email">
+
+            <h3>Your Cart</h3>
+            <table class="cart-items-table">
+                <thead>
+                    <tr>
+                        <th>Book</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cart_items %}
+                    <tr>
+                        <td>{{ item.title }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.price }}</td>
+                        <td>${{ item.subtotal }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="total-amount">
+                Total: ${{ total_amount }}
+            </div>
+
+            <h3>Payment (Simulation Only)</h3>
+
+         <label>Card Number</label>
+         <input type="text" name="card_number" placeholder="4111 1111 1111 1111" required>
+
+        <label>Expiry (MM/YY)</label>
+        <input type="text" name="card_exp" placeholder="08/28" required>
+
+        <label>CVV</label>
+        <input type="password" name="card_cvv" placeholder="123" required>
+
+        <p style="color:#aaa; font-size:0.9rem;">
+        This is a simulated payment. No real card information is stored.
+        </p>
+        <hr>
+
+
+            <button type="submit" class="btn">Place Order</button>
+
+        </form>
+    </section>
+
+</body>
+</html>

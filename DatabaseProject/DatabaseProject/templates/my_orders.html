@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="orders-section">
+    <h2>📜 My Orders</h2>
+
+    {% if orders %}
+        {% for order in orders %}
+            <div class="order-card">
+
+                <h3>
+                    Order #{{ order['id'] }}
+                    <span class="order-date">— {{ order['date'] }}</span>
+                </h3>
+
+                <p class="total">
+                    Total: ${{ "%.2f"|format(order['total']) }}
+                </p>
+
+                <table class="order-items-table">
+                    <thead>
+                        <tr>
+                            <th>Book</th>
+                            <th>Author</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order['items'] %}
+                        <tr>
+                            <td>{{ item['title'] }}</td>
+                            <td>{{ item['author'] }}</td>
+                            <td>{{ item['quantity'] }}</td>
+                            <td>${{ "%.2f"|format(item['price']) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                {% if order['receipt_path'] %}
+                    <a href="{{ url_for('static', filename=order['receipt_path']) }}"
+                       download
+                       class="btn small">
+                        📄 Download Receipt
+                    </a>
+                {% endif %}
+
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="warning">You have not placed any orders yet.</p>
+    {% endif %}
+</section>
+
+{% endblock %}

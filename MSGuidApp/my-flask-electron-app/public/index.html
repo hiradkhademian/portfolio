@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MS Support Webpage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f7;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #2e86c1;
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        nav {
+            background-color: #145a8d;
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+        }
+        nav a {
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-size: 18px;
+        }
+        nav a:hover {
+            background-color: #2e86c1;
+            border-radius: 5px;
+        }
+        .section-title {
+            text-align: center;
+            margin: 40px 0 20px 0;
+            font-size: 32px;
+            color: #145a8d;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+        }
+        .card h3 {
+            color: #2e86c1;
+        }
+        footer {
+            background-color: #145a8d;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Support for People with Multiple Sclerosis (MS)</h1>
+        {% if username %}
+            <p>Welcome, {{ username }}!</p>
+            <a href="{{ url_for('logout') }}" style="color: white; text-decoration: none;">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" style="color: white; text-decoration: none;">Login</a>
+        {% endif %}
+    </header>
+    <nav>
+        <a href="#education">Educational Resources</a>
+        <a href="#health">Health & Well-being</a>
+        <a href="#support">Community & Support</a>
+        <a href="#daily">Daily Living</a>
+    </nav>
+    <section id="education">
+        <h2 class="section-title">Educational Resources</h2>
+        <div class="content">
+            <div class="card">
+                <h3>MS Information Hub</h3>
+                <p>Comprehensive details on MS symptoms, treatments, and research updates.</p>
+            </div>
+            <div class="card">
+                <h3>FAQs</h3>
+                <p>Answers to common questions about managing MS and its treatment.</p>
+            </div>
+            <div class="card">
+                <h3>Research Updates</h3>
+                <p>Stay informed about the latest research and medical advances in MS care.</p>
+            </div>
+        </div>
+    </section>
+    <section id="health">
+        <h2 class="section-title">Health & Well-being</h2>
+        <div class="content">
+            <div class="card">
+                <h3>Telemedicine Services</h3>
+                <p>Consult with MS specialists from the comfort of your home.</p>
+            </div>
+            <div class="card">
+                <h3>Exercise Programs</h3>
+                <p>Specialized exercises to improve mobility and strength for MS patients.</p>
+            </div>
+            <div class="card">
+                <h3>Mental Health Support</h3>
+                <p>Access to mental health counselors for chronic illness support.</p>
+            </div>
+        </div>
+    </section>
+    <section id="support">
+        <h2 class="section-title">Community & Support</h2>
+        <div class="content">
+            <div class="card">
+                <h3>Online Support Groups</h3>
+                <p>Connect with others in the MS community and share your experiences.</p>
+            </div>
+            <div class="card">
+                <h3>Mentorship Program</h3>
+                <p>Find guidance from experienced MS patients to help navigate your journey.</p>
+            </div>
+            <div class="card">
+                <h3>Family & Caregiver Resources</h3>
+                <p>Information and support for family members and caregivers of MS patients.</p>
+            </div>
+        </div>
+    </section>
+    <section id="daily">
+        <h2 class="section-title">Daily Living</h2>
+        <div class="content">
+            <div class="card">
+                <h3>Assistive Technology</h3>
+                <p>Discover tools and devices that can make daily tasks easier.</p>
+            </div>
+            <div class="card">
+                <h3>Nutrition & Diet Plans</h3>
+                <p>Get recommendations on diets that help manage MS symptoms.</p>
+            </div>
+            <div class="card">
+                <h3>Emergency Resources</h3>
+                <p>Know what to do in case of an emergency or sudden symptom flare-ups.</p>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

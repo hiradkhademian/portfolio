@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FAQ Chatbot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='chatbot.css') }}">
+</head>
+<body>
+
+<div class="chat-container">
+  <h2>🧠 MS Support Chatbot</h2>
+  <div id="chat-box"></div>
+  <input type="text" id="userInput" placeholder="Ask about MS..." />
+  <button onclick="sendMessage()">Send</button>
+  <a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+</div>
+
+<script>
+    function sendMessage() {
+      const input = document.getElementById("userInput");
+      const message = input.value.trim();
+      if (!message) return;
+  
+      addMessage(message, "user");
+  
+      fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ query: message })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Network response was not ok");
+        return res.json();
+      })
+      .then(data => {
+        let botMsg = "";
+  
+        if (data.answer && !data.web_results && !data.ms_society_results) {
+          botMsg = `<strong>${data.question}</strong><br>${data.answer}`;
+        } else {
+          botMsg += `<strong>${data.answer}</strong><br>`;
+  
+          if (data.ms_society_results?.length > 0) {
+            botMsg += "<br><strong>From National MS Society:</strong><ul>";
+            data.ms_society_results.forEach(title => {
+              botMsg += `<li>${title}</li>`;
+            });
+            botMsg += "</ul>";
+          }
+  
+          if (data.web_results?.length > 0) {
+            botMsg += "<br><strong>Latest Info From Web:</strong><ul>";
+            data.web_results.forEach(item => {
+              botMsg += `<li><a href="${item.url}" target="_blank">${item.url}</a>`;
+              if (item.snippet && item.snippet.trim() && item.snippet !== "No summary available.") {
+                botMsg += `<br><em>${item.snippet}</em>`;
+              }
+              botMsg += `</li>`;
+            });
+            botMsg += "</ul>";
+          }
+  
+          if (data.answer.includes("I'm having trouble")) {
+            botMsg = `❌ ${data.answer}`;
+          }
+        }
+  
+        addMessage(botMsg, "bot");
+      })
+      .catch(err => {
+        addMessage("❌ I'm having trouble connecting right now.", "bot");
+        console.error("Chatbot error:", err);
+      });
+  
+      input.value = "";
+    }
+  
+    function addMessage(text, sender) {
+      const chatBox = document.getElementById("chat-box");
+      const msgDiv = document.createElement("div");
+      msgDiv.className = `message ${sender}-msg`;
+      msgDiv.innerHTML = text;
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+  
+
+</body>
+</html>

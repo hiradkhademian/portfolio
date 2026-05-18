@@ -1,0 +1,196 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Farm Details — Smart AgriTwin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #f4f6f9;
+      padding-top: 90px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .zone-card {
+      border-radius: 16px;
+      background: #fff;
+      padding: 22px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.08);
+      transition: 0.25s;
+      cursor: pointer;
+    }
+
+    .zone-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 22px rgba(0,0,0,0.15);
+      background: #f0f6ff;
+    }
+
+    .container-narrow {
+      max-width: 1050px;
+      margin: auto;
+    }
+
+    .navbar-brand {
+      font-weight: 600;
+    }
+
+    .nav-link {
+      color: #fff !important;
+      margin-right: 10px;
+    }
+
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- 🌍 GLOBAL NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow">
+  <div class="container-fluid">
+
+    <a class="navbar-brand" href="/static/dashboard.html">
+      🌱 Smart AgriTwin
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navFarmGlobal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navFarmGlobal">
+      <ul class="navbar-nav ms-auto">
+
+        <li class="nav-item"><a class="nav-link" href="/static/dashboard.html">🏡 Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/alerts.html">🚨 Alerts</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/rules.html">⚙️ Rules</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/send_telemetry.html">📡 Send Telemetry</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/devices.html">🔌 Devices</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/commands.html">🖥️ Commands</a></li>
+
+        <li class="nav-item">
+          <span id="username-label" class="navbar-text text-white ms-3 me-3"></span>
+        </li>
+
+        <li class="nav-item">
+          <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+        </li>
+
+      </ul>
+    </div>
+
+  </div>
+</nav>
+
+
+<!-- PAGE CONTENT -->
+<div class="container-narrow">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 id="farm-title" class="fw-bold">Farm</h2>
+    <button class="btn btn-primary" onclick="addZone()">+ Add Zone</button>
+  </div>
+
+  <button class="btn btn-dark mb-3" onclick="viewDevices()">View Devices</button>
+
+  <div id="zones" class="row g-4"></div>
+
+</div>
+
+
+<script>
+// AUTH
+const token = localStorage.getItem("token");
+const username = localStorage.getItem("username");
+
+if (!token) window.location.href = "/static/login.html";
+
+// FIX username display
+document.getElementById("username-label").innerText =
+  username ? `Logged in as: ${username}` : "";
+
+// logout
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  window.location.href = "/static/login.html";
+}
+
+// get farm ID
+const farmId = new URLSearchParams(window.location.search).get("farm_id");
+if (!farmId) window.location.href = "/static/dashboard.html";
+
+// load zones
+async function loadFarm() {
+  document.getElementById("farm-title").innerText = `Farm ${farmId}`;
+
+  const res = await fetch(`/api/zones/`, {
+    headers: { "Authorization": "Bearer " + token }
+  });
+
+  // Tüm zone'ları backend'den al
+  const allZones = await res.json();
+
+  // SADECE BU FARM'A AİT ZONE'LARI GÖSTER
+  const zones = allZones.filter(z => z.farm_id == farmId);
+
+  const container = document.getElementById("zones");
+  container.innerHTML = "";
+
+  if (zones.length === 0) {
+    container.innerHTML = "<p>No zones in this farm yet.</p>";
+    return;
+  }
+
+  zones.forEach(z => {
+    container.innerHTML += `
+      <div class="col-md-4">
+        <div class="zone-card" onclick="openZone(${z.id})">
+          <h5 class="fw-semibold">${z.name}</h5>
+          <small class="text-muted">Zone ID: ${z.id}</small>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function openZone(id) {
+  window.location.href = `/static/zone_detail.html?zone_id=${id}`;
+}
+function viewDevices() {
+    window.location.href = `/static/devices.html?farm_id=${farmId}`;
+}
+// create a zone
+function addZone() {
+  const name = prompt("Enter zone name:");
+  if (!name) return;
+
+  fetch("/api/zones/", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name,
+      farm_id: farmId
+    })
+  }).then(() => loadFarm());
+}
+
+loadFarm();
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/assets/js/global-alerts.js"></script>
+
+
+</body>
+</html>

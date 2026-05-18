@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="home-section fantasy-home">
+
+    <!-- HERO -->
+    <div class="welcome fantasy-hero">
+        <h2>📜 The Grand Archive of Stories</h2>
+        <p class="home-tagline">
+            Ancient tomes. Legendary sagas.  
+            Worlds bound in ink and shadow.
+        </p>
+
+        <a href="{{ url_for('catalog') }}" class="btn fantasy-btn">
+            Enter the Library
+        </a>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="rune-divider">✦ ✦ ✦</div>
+
+    <!-- FEATURES -->
+    <div class="features fantasy-features">
+        <div class="feature-card fantasy-card">
+            <h3>🗡 Epic Sagas</h3>
+            <p>
+                Explore legendary series like <em>The Dark Tower</em>,
+                <em>The Lord of the Rings</em>, and more.
+            </p>
+        </div>
+
+        <div class="feature-card fantasy-card">
+            <h3>📚 Ancient Tomes</h3>
+            <p>
+                Classics, forbidden knowledge, and modern masterpieces
+                preserved in one archive.
+            </p>
+        </div>
+
+        <div class="feature-card fantasy-card">
+            <h3>🕯 Personalized Orders</h3>
+            <p>
+                Track your journey through past orders
+                and receive arcane receipts.
+            </p>
+        </div>
+
+        <div class="feature-card fantasy-card">
+            <h3>⚙ Keeper’s Console</h3>
+            <p>
+                Admins wield the power to curate,
+                manage, and analyze the archive.
+            </p>
+        </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="rune-divider">✦ ✦ ✦</div>
+
+    <!-- CALL TO ACTION -->
+    <div class="home-footer-cta">
+        <p>
+            “Books are portals.  
+            Choose wisely where you step.”
+        </p>
+    </div>
+
+</section>
+
+{% endblock %}

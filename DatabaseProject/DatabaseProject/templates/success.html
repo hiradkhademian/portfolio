@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Success</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        .success-container {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            max-width: 600px;
+            margin: 100px auto;
+            backdrop-filter: blur(6px);
+        }
+
+        .success-btn {
+            display: inline-block;
+            padding: 12px 25px;
+            margin: 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            text-decoration: none;
+            color: white;
+            transition: 0.3s ease;
+        }
+
+        .btn-catalog {
+            background: #3457D5;
+        }
+
+        .btn-catalog:hover {
+            background: #1f3ea1;
+            transform: scale(1.05);
+        }
+
+        .btn-orders {
+            background: #008148;
+        }
+
+        .btn-orders:hover {
+            background: #005f36;
+            transform: scale(1.05);
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="success-container">
+    <h1>🎉 Order Submitted Successfully!</h1>
+    <p>Your order has been placed and is now being processed.</p>
+
+    <a href="{{ url_for('catalog') }}" class="success-btn btn-catalog">📚 Back to Catalog</a>
+    <a href="{{ url_for('my_orders') }}" class="success-btn btn-orders">🧾 View My Orders</a>
+</div>
+
+</body>
+</html>

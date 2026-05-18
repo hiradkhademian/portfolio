@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:15
+    container_name: agritwin-db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: agritwin
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: agritwin-web
+    command: flask run --host=0.0.0.0 --port=5000
+    env_file:
+      - .env
+    environment:
+      FLASK_APP: app
+      FLASK_ENV: development
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: agritwin
+      DB_USER: postgres
+      DB_PASS: postgres
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/agritwin
+    ports:
+      - "5001:5000"
+    depends_on:
+      - db
+
+  simulation:
+    build: .
+    container_name: agritwin-simulation
+    command: python simulation/simulation.py
+    env_file:
+      - .env
+    depends_on:
+      - web
+
+volumes:
+  pgdata:

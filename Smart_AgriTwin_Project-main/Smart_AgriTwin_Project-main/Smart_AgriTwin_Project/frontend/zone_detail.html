@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Zone Detail — Smart AgriTwin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      background: #f4f6f9;
+      padding-top: 90px;
+      font-family: 'Inter', sans-serif;
+    }
+    .card {
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.09);
+      padding: 25px;
+      background: #fff;
+    }
+    #latest {
+      background: #f9fbff;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.08);
+    }
+    .info-box {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 15px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .nav-link {
+      color: #fff !important;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/static/dashboard.html">🌱 Smart AgriTwin</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navZoneGlobal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navZoneGlobal">
+      <ul class="navbar-nav ms-auto">
+
+        <li class="nav-item"><a class="nav-link" href="/static/dashboard.html">🏡 Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/alerts.html">🚨 Alerts</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/rules.html">⚙️ Rules</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/devices.html">🔌 Devices</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/commands.html">🖥️ Commands</a></li>
+
+        <li class="nav-item">
+          <span id="username-label" class="navbar-text text-white ms-3 me-3"></span>
+        </li>
+        <li class="nav-item"><button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container" style="max-width:1100px;">
+
+  <div class="card">
+
+    <h3 id="zone-title" class="fw-bold mb-4">Zone Detail</h3>
+
+    <button class="btn btn-success mb-3" onclick="addDeviceToZone()">
+    ➕ Add Device to This Zone
+    </button>
+
+
+    <div class="row">
+
+      <div class="col-md-8">
+        <canvas id="chart" height="260"></canvas>
+      </div>
+
+      <div class="col-md-4">
+
+        <div class="info-box">
+          <h5 class="fw-semibold">Latest Telemetry</h5>
+          <pre id="latest">Loading…</pre>
+        </div>
+
+        <div class="info-box">
+          <h6 class="fw-bold mb-2">Zone Actions</h6>
+
+          <button class="btn btn-sm btn-primary w-100 mb-2" onclick="gotoAlerts()">🚨 View Alerts</button>
+          <button class="btn btn-sm btn-secondary w-100 mb-2" onclick="gotoRules()">⚙️ View Rules</button>
+          <button class="btn btn-sm btn-dark w-100" onclick="gotoDevices()">🔌 View Devices</button>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// AUTH
+const token = localStorage.getItem("token");
+const username = localStorage.getItem("username");
+if (!token) window.location.href = "/static/login.html";
+
+document.getElementById("username-label").innerText =
+  username ? "Logged in as: " + username : "";
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  window.location.href = "/static/login.html";
+}
+
+const zoneId = new URLSearchParams(window.location.search).get("zone_id") || 1;
+
+// ACTION BUTTONS
+function gotoAlerts() { window.location.href = `/static/alerts.html?zone_id=${zoneId}`; }
+function gotoRules() { window.location.href = `/static/rules.html?zone_id=${zoneId}`; }
+function gotoDevices() { window.location.href = `/static/devices.html?zone_id=${zoneId}`; }
+
+async function apiGet(url) {
+  const res = await fetch(url, { headers: { "Authorization": "Bearer " + token }});
+  if (res.status === 401) window.location.href = "/static/login.html";
+  return res.json();
+}
+
+async function fetchHistory() {
+  return apiGet(`/api/telemetry/history?zone_id=${zoneId}&limit=200`);
+}
+
+async function fetchLatest() {
+  const res = await fetch(`/api/telemetry/latest?zone_id=${zoneId}`, {
+    headers: { "Authorization": "Bearer " + token }
+  });
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+let chartInstance = null;
+
+function buildChart(labels, temp, hum, soil) {
+  const ctx = document.getElementById("chart").getContext("2d");
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Temperature", data: temp, borderWidth: 2 },
+        { label: "Humidity", data: hum, borderWidth: 2 },
+        { label: "Soil Moisture", data: soil, borderWidth: 2 }
+      ]
+    }
+  });
+}
+
+async function render() {
+  document.getElementById("zone-title").innerText = `Zone ${zoneId} — Telemetry`;
+
+  const history = await fetchHistory();
+  if (!history || history.length === 0) {
+    document.getElementById("latest").innerText = "No telemetry yet.";
+    return;
+  }
+
+  const labels = history.map(h => new Date(h.timestamp).toLocaleTimeString());
+  buildChart(
+    labels,
+    history.map(h => h.payload.temperature),
+    history.map(h => h.payload.humidity),
+    history.map(h => h.payload.soil_moisture)
+  );
+
+  const latest = await fetchLatest();
+  document.getElementById("latest").innerText = latest ? JSON.stringify(latest.payload, null, 2) : "No data.";
+}
+
+render();
+setInterval(render, 5000);
+</script>
+
+
+<script>
+function addDeviceToZone() {
+  const zoneId = new URLSearchParams(window.location.search).get("zone_id");
+  window.location.href = `/static/devices.html?zone_id=${zoneId}`;
+}
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/assets/js/global-alerts.js"></script>
+
+
+</body>
+</html>

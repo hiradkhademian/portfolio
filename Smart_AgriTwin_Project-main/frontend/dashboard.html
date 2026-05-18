@@ -1,0 +1,187 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard — Smart AgriTwin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #f4f6f9;
+      padding-top: 80px;
+    }
+
+    .card {
+      border: none;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: 0.25s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      cursor: pointer;
+    }
+
+    .container-narrow {
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .navbar-brand {
+      font-weight: 600;
+    }
+
+    .nav-link {
+      color: #fff !important;
+      margin-right: 10px;
+    }
+
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow">
+  <div class="container-fluid">
+
+    <a class="navbar-brand" href="/static/dashboard.html">
+      🌱 Smart AgriTwin
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navMenuGlobal">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMenuGlobal">
+      <ul class="navbar-nav ms-auto">
+
+        <li class="nav-item"><a class="nav-link" href="/static/dashboard.html">🏡 Dashboard</a></li>
+       <li class="nav-item">
+  <a class="nav-link position-relative" href="/static/alerts.html">
+    🚨 Alerts
+    <span id="alertBadge"
+          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+      0
+    </span>
+  </a>
+</li>
+
+        <li class="nav-item"><a class="nav-link" href="/static/rules.html">⚙️ Rules</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/devices.html">🔌 Devices</a></li>
+        <li class="nav-item"><a class="nav-link" href="/static/commands.html">🖥️ Commands</a></li>
+
+        <li class="nav-item">
+          <span id="username-label" class="navbar-text text-white ms-3 me-3"></span>
+        </li>
+
+        <li class="nav-item"><button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button></li>
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container-narrow mt-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Your Farms</h2>
+    <button class="btn btn-primary" onclick="createFarm()">+ Add Farm</button>
+  </div>
+
+  <div id="farms" class="row g-3"></div>
+
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+const username = localStorage.getItem("username");
+
+if (!token) window.location.href = "/static/login.html";
+
+document.getElementById("username-label").innerText = "Logged in as: " + username;
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  window.location.href = "/static/login.html";
+}
+
+async function loadFarms() {
+  const res = await fetch("/api/farms/", {
+    headers: { "Authorization": "Bearer " + token }
+  });
+
+  const farms = await res.json();
+  const container = document.getElementById("farms");
+  container.innerHTML = "";
+
+  farms.forEach(f => {
+    container.innerHTML += `
+      <div class="col-md-4">
+        <div class="card p-3" onclick="openFarm(${f.id})">
+          <h5>${f.name}</h5>
+          <small class="text-muted">Farm ID: ${f.id}</small>
+        </div>
+      </div>`;
+  });
+}
+
+function openFarm(id) {
+  window.location.href = "/static/farm.html?farm_id=" + id;
+}
+
+function createFarm() {
+  const name = prompt("Enter farm name:");
+  if (!name) return;
+
+  fetch("/api/farms/", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ name })
+  }).then(() => loadFarms());
+}
+
+loadFarms();
+</script>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/assets/js/global-alerts.js"></script>
+
+
+<!-- Global Alert Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div
+    id="alertToast"
+    class="toast align-items-center text-bg-danger border-0"
+    role="alert"
+  >
+    <div class="d-flex">
+      <div class="toast-body" id="alertToastBody">
+        Alert message
+      </div>
+      <button
+        type="button"
+        class="btn-close btn-close-white me-2 m-auto"
+        data-bs-dismiss="toast"
+      ></button>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

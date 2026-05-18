@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="catalog-section">
+    <h2>Book Catalog</h2>
+
+    {% if books %}
+
+    <!-- 🔍 FILTER + SORT BAR -->
+    <div class="filter-bar">
+        <form method="GET" action="{{ url_for('catalog') }}" class="filter-form">
+
+            <!-- Category -->
+            <select name="category">
+                <option value="">All Categories</option>
+                <option value="Fantasy" {% if request.args.get('category') == 'Fantasy' %}selected{% endif %}>Fantasy</option>
+                <option value="Science Fiction" {% if request.args.get('category') == 'Science Fiction' %}selected{% endif %}>Science Fiction</option>
+                <option value="Horror" {% if request.args.get('category') == 'Horror' %}selected{% endif %}>Horror</option>
+                <option value="Classics" {% if request.args.get('category') == 'Classics' %}selected{% endif %}>Classics</option>
+                <option value="Mystery" {% if request.args.get('category') == 'Mystery' %}selected{% endif %}>Mystery</option>
+                <option value="Young Adult" {% if request.args.get('category') == 'Young Adult' %}selected{% endif %}>Young Adult</option>
+                <option value="General" {% if request.args.get('category') == 'General' %}selected{% endif %}>General</option>
+            </select>
+
+            <!-- Price Range -->
+            <input type="number"
+                   name="min_price"
+                   placeholder="Min Price"
+                   step="0.01"
+                   value="{{ request.args.get('min_price', '') }}">
+
+            <input type="number"
+                   name="max_price"
+                   placeholder="Max Price"
+                   step="0.01"
+                   value="{{ request.args.get('max_price', '') }}">
+
+            <!-- Stock -->
+            <label>
+                <input type="checkbox"
+                       name="in_stock"
+                       value="1"
+                       {% if request.args.get('in_stock') %}checked{% endif %}>
+                In Stock Only
+            </label>
+
+            <!-- Sorting -->
+            <select name="sort">
+                <option value="">Sort by</option>
+                <option value="price_asc" {% if request.args.get('sort') == 'price_asc' %}selected{% endif %}>
+                    Price: Low → High
+                </option>
+                <option value="price_desc" {% if request.args.get('sort') == 'price_desc' %}selected{% endif %}>
+                    Price: High → Low
+                </option>
+            </select>
+
+            <button type="submit" class="btn small">Apply</button>
+        </form>
+    </div>
+
+    <!-- 📚 BOOK GRID -->
+    <div class="book-grid">
+        {% for book in books %}
+        <div class="book-card">
+
+            <a href="{{ url_for('book_details', book_id=book['id']) }}">
+                <img src="{{ url_for('static', filename='images/' ~ (book['image'] or 'default.jpg')) }}"
+                     alt="{{ book['title'] }}">
+                <h3>{{ book['title'] }}</h3>
+                <p class="author">{{ book['author'] }}</p>
+                <p class="price">${{ "%.2f"|format(book['price']) }}</p>
+            </a>
+
+            {% if book['stock'] > 0 %}
+                <form method="POST" action="{{ url_for('add_to_cart', book_id=book['id']) }}">
+                    <button type="submit" class="btn">Add to Cart</button>
+                </form>
+            {% else %}
+                <button class="btn disabled" disabled>Out of Stock</button>
+            {% endif %}
+
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+        <p>No books available at the moment.</p>
+    {% endif %}
+</section>
+
+{% endblock %}

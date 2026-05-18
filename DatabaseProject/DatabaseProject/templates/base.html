@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Bookstore</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <h1 class="logo">📜 The Grand Archive of Stories</h1>
+<ul>
+    <li><a href="{{ url_for('home') }}">Home</a></li>
+    <li><a href="{{ url_for('catalog') }}">Catalog</a></li>
+
+    {% if 'user_id' in session %}
+        <li><a href="{{ url_for('cart') }}">Cart 🛒</a></li>
+         {% if session.get('is_admin') != 1 %}
+    <li><a href="{{ url_for('my_orders') }}">My Orders 📜</a></li>
+{% endif %}
+
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        {% if session.get('username') == 'Admin' %}
+            <li><a href="{{ url_for('admin') }}">Admin</a></li>
+        {% endif %}
+    {% else %}
+        <li><a href="{{ url_for('login') }}">Login</a></li>
+        <li><a href="{{ url_for('register') }}">Register</a></li>
+    {% endif %}
+
+    <form action="{{ url_for('search') }}" method="GET" class="search-form">
+    <input type="text" name="q" placeholder="Search books..." required>
+    <button type="submit">🔍</button>
+</form>
+</ul>
+
+        </nav>
+    </header>
+
+   <main>
+
+    <main>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="alert {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}
+        <section class="home-section">
+            <h2>Welcome to the Online Bookstore 📚</h2>
+
+            <p class="home-description">
+                Browse books, manage your cart, and place orders easily.
+            </p>
+
+            <div class="home-actions">
+                <a href="{{ url_for('catalog') }}" class="btn">Browse Catalog</a>
+
+                {% if 'user_id' not in session %}
+                    <a href="{{ url_for('login') }}" class="btn secondary">Login</a>
+                    <a href="{{ url_for('register') }}" class="btn secondary">Register</a>
+                {% else %}
+                    <a href="{{ url_for('cart') }}" class="btn">Go to Cart 🛒</a>
+                {% endif %}
+            </div>
+        </section>
+    {% endblock %}
+</main>
+
+
+    <footer>
+        <p>© {{ 2025 }} Online Bookstore — All rights reserved.</p>
+    </footer>
+</body>
+</html>

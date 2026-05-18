@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="book-details">
+    <div class="details-container">
+
+        <div class="cover">
+            <img src="{{ url_for('static', filename='images/' + (book['image'] or 'default.jpg')) }}">
+        </div>
+
+        <div class="info">
+            <h2>{{ book['title'] }}</h2>
+            <h3>by {{ book['author'] }}</h3>
+
+            <p class="description">{{ book['description'] }}</p>
+
+            <p class="price">Price: ${{ "%.2f"|format(book['price']) }}</p>
+
+            <form method="POST" action="{{ url_for('add_to_cart', book_id=book['id']) }}">
+                <button class="btn">Add to Cart</button>
+            </form>
+        </div>
+
+    </div>
+
+    <p><strong>Category:</strong> {{ book['category'] }}</p>
+    {% if book['series'] %}
+<p><strong>Series:</strong> {{ book['series'] }}</p>
+{% endif %}
+
+
+    {% if related %}
+    <h3 class="related-title">Complete the Whole Set!</h3>
+
+    <div class="related-grid">
+        {% for r in related %}
+        <div class="book-card small">
+            <a href="{{ url_for('book_details', book_id=r['id']) }}">
+                <img src="{{ url_for('static', filename='images/' + (r['image'] or 'default.jpg')) }}">
+                <p>{{ r['title'] }}</p>
+            </a>
+
+            <form method="POST" action="{{ url_for('add_to_cart', book_id=r['id']) }}">
+                <button class="btn small">Add</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</section>
+
+{% endblock %}

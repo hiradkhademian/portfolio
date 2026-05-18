@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Become a Mentor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='mentorship.css') }}">
+</head>
+<body>
+
+<header>
+    <h1>Become a Mentor</h1>
+</header>
+
+<section id="mentor-signup">
+    <h2>Share Your Experience</h2>
+    <p>Help others navigate their MS journey by becoming a mentor.</p>
+
+    <form action="{{ url_for('become_mentor') }}" method="POST">
+        <label for="name">Full Name:</label>
+        <input type="text" id="name" name="name" required>
+    
+        <label for="email">Email:</label>  <!-- ✅ Added email field -->
+        <input type="email" id="email" name="email" required>
+    
+        <label for="experience_years">Years of Experience with MS:</label>
+        <input type="number" id="experience_years" name="experience_years" required>
+    
+        <label for="specialty">Specialty (e.g., Coping Strategies, Nutrition, Exercise):</label>
+        <input type="text" id="specialty" name="specialty" required>
+    
+        <button type="submit">Sign Up as Mentor</button>
+    </form>
+    
+</section>
+
+<a href="{{ url_for('mentorship_page') }}" class="back-button">Back to Mentorship</a>
+<a href="{{ url_for('index') }}" class="back-button">Back to Home</a>
+
+</body>
+</html>

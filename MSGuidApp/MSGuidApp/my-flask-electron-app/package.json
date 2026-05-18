@@ -1,0 +1,14 @@
+{
+  "name": "my-flask-electron-app",
+  "version": "1.0.0",
+  "description": "Flask and Electron App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package-mac": "electron-packager . my-flask-electron-app --platform=darwin --arch=x64 --out=release-builds --overwrite"
+  },
+  "devDependencies": {
+    "electron": "^34.3.0",
+    "electron-packager": "^15.5.2"
+  }
+}

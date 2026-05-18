@@ -1,0 +1,26 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: agritwin
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  web:
+    build: .
+    command: flask run --host=0.0.0.0
+    environment:
+      FLASK_APP: run.py
+      FLASK_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/agritwin
+      JWT_SECRET_KEY: "dev-secret"
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+volumes:
+  pgdata:

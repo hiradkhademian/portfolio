@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="admin-section">
+    <h2>📊 Admin Analytics Dashboard</h2>
+
+    <div class="analytics-cards">
+        <div class="card">
+            <h3>Total Revenue</h3>
+            <p>${{ "%.2f"|format(total_revenue) }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Total Orders</h3>
+            <p>{{ total_orders }}</p>
+        </div>
+    </div>
+
+    <h3>🔥 Top Selling Books</h3>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Book</th>
+                <th>Sold Copies</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in top_books %}
+            <tr>
+                <td>{{ book['title'] }}</td>
+                <td>{{ book['sold'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('export_books_csv') }}" class="btn small">
+    ⬇ Export Top Books CSV
+</a>
+
+    <h3>📅 Orders Per Day</h3>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Orders</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in orders_by_day %}
+            <tr>
+                <td>{{ row['day'] }}</td>
+                <td>{{ row['count'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('export_orders_csv') }}" class="btn small">
+    ⬇ Export Orders CSV
+</a>
+
+
+</section>
+
+<hr>
+
+<h3>📈 Orders Per Day (Chart)</h3>
+<div class="chart-wrapper">
+    <canvas id="ordersChart"></canvas>
+</div>
+
+
+<h3>📊 Top Selling Books (Chart)</h3>
+<div class="chart-wrapper">
+    <canvas id="booksChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const ordersLabels = {{ orders_by_day
+    | default([])
+    | map(attribute='day')
+    | list
+    | tojson
+}};
+
+const ordersData = {{ orders_by_day
+    | default([])
+    | map(attribute='count')
+    | list
+    | tojson
+}};
+
+const bookLabels = {{ top_books
+    | default([])
+    | map(attribute='title')
+    | list
+    | tojson
+}};
+
+const bookData = {{ top_books
+    | default([])
+    | map(attribute='sold')
+    | list
+    | tojson
+}};
+
+if (ordersLabels.length > 0) {
+    new Chart(document.getElementById('ordersChart'), {
+        type: 'line',
+        data: {
+            labels: ordersLabels,
+            datasets: [{
+                label: 'Orders',
+                data: ordersData,
+                borderWidth: 2,
+                fill: false,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+if (bookLabels.length > 0) {
+    new Chart(document.getElementById('booksChart'), {
+        type: 'bar',
+        data: {
+            labels: bookLabels,
+            datasets: [{
+                label: 'Copies Sold',
+                data: bookData,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+</script>
+
+
+{% endblock %}
