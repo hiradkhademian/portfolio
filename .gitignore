@@ -8,3 +8,4 @@ instance/
 node_modules
 .venv/
 **/.venv/
+ios/Pods/
