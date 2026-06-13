@@ -1,0 +1,3 @@
+# Benchmark Results - All Three Modes on All Images
+# Format: Image | Resolution | Mode | Time(ms) | Cores
+
