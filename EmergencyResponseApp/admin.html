@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Konum Paneli</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* ── Sol panel ── */
+    #sidebar {
+      width: 270px;
+      min-width: 270px;
+      height: 100vh;
+      background: rgba(255,255,255,0.97);
+      border-right: 1px solid #e8e8e8;
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+    }
+
+    #sidebar-header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid #eee;
+      background: #1a1a2e;
+      color: #fff;
+    }
+
+    #sidebar-header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    #sidebar-header p {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 3px;
+    }
+
+    #user-list {
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Profil satırı */
+    .user-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f2f2f2;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .user-item:hover    { background: #fafafa; }
+    .user-item.active   { background: #fff5f5; border-left: 3px solid #e53e3e; }
+
+    .marker-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      margin-top: 3px;
+      flex-shrink: 0;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    .user-info h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .user-meta {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+      line-height: 1.5;
+    }
+
+    /* ── Harita ── */
+    #map {
+      flex: 1;
+      height: 100vh;
+    }
+
+    /* Durum çubuğu */
+    #status-bar {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      z-index: 1000;
+      background: rgba(0,0,0,0.72);
+      color: #fff;
+      padding: 7px 16px;
+      border-radius: 16px;
+      font-size: 12px;
+    }
+
+    /* Yükleniyor */
+    #loading {
+      position: absolute;
+      inset: 0;
+      z-index: 2000;
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .spinner {
+      width: 34px; height: 34px;
+      border: 3px solid #ddd;
+      border-top-color: #e53e3e;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.35; }
+    }
+
+    .live-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      margin-right: 5px;
+      animation: pulse 1.4s infinite;
+    }
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <span style="color:#555; font-size:14px;">Yükleniyor…</span>
+</div>
+
+<!-- Sol panel -->
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h1>� Acil Durum Paneli</h1>
+    <p id="share-count">Yükleniyor…</p>
+  </div>
+  <div id="user-list">
+    <!-- JS ile doldurulur -->
+  </div>
+</div>
+
+<!-- Harita -->
+<div id="map"></div>
+
+<div id="status-bar"><span class="live-dot"></span>Canlı</div>
+
+<script>
+  // ─── AYARLAR ────────────────────────────────────────────────────────────────
+  // Backend endpoint'lerin:
+  // GET /api/admin/sharers  → [{ id, firstName, lastName, age, bloodType, conditions, lat, lng, timestamp }, …]
+  const API_BASE = '/api';
+  const POLL_MS  = 3000;
+
+  // Admin için basit renk paleti (her kullanıcıya farklı renk)
+  const COLORS = [
+    '#e53e3e', '#3182ce', '#d69e2e', '#38a169',
+    '#805ad5', '#dd6b20', '#00b5d8', '#e53e8b'
+  ];
+  // ────────────────────────────────────────────────────────────────────────────
+
+  const map = L.map('map', { zoomControl: true }).setView([39.9, 32.85], 6);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  // state
+  const state = {};  // id → { marker, color, data }
+  let selectedId = null;
+
+  // ── İkon oluştur ────────────────────────────────────────────────────────────
+  function makeIcon(color, highlighted) {
+    const size = highlighted ? 22 : 16;
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        width:${size}px; height:${size}px;
+        background:${color};
+        border:${highlighted ? 4 : 3}px solid #fff;
+        border-radius:50%;
+        box-shadow:0 2px ${highlighted ? 10 : 5}px rgba(0,0,0,${highlighted ? 0.5 : 0.3});
+        transition: all 0.2s;
+      "></div>`,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2]
+    });
+  }
+
+  // ── Veri güncelle ───────────────────────────────────────────────────────────
+  async function refresh() {
+    try {
+      const res   = await fetch(`${API_BASE}/admin/sharers`);
+      if (!res.ok) throw new Error();
+      const users = await res.json();
+      applyData(users);
+    } catch {
+      // Demo verisi — backend bağlanınca kaldır
+      applyData(DEMO_DATA);
+    }
+  }
+
+  function applyData(users) {
+    const activeIds = new Set(users.map(u => u.emergency_id));
+
+    // Gidenleri kaldır
+    for (const id of Object.keys(state)) {
+      if (!activeIds.has(id)) {
+        state[id].marker.remove();
+        delete state[id];
+      }
+    }
+
+    const bounds = [];
+
+    users.forEach((u, i) => {
+      const color   = COLORS[i % COLORS.length];
+      const latlng  = [u.lat, u.lng];
+      const highlighted = (u.emergency_id === selectedId);
+
+      bounds.push(latlng);
+
+      if (!state[u.emergency_id]) {
+        // Yeni marker
+        const marker = L.marker(latlng, { icon: makeIcon(color, highlighted) })
+          .addTo(map)
+          .on('click', () => selectUser(u.emergency_id));
+        state[u.emergency_id] = { marker, color, data: u };
+      } else {
+        state[u.emergency_id].marker.setLatLng(latlng);
+        state[u.emergency_id].marker.setIcon(makeIcon(color, highlighted));
+        state[u.emergency_id].data = u;
+      }
+    });
+
+    if (bounds.length > 0) {
+      if (bounds.length === 1) {
+        map.setView(bounds[0], 14, { animate: true });
+      } else {
+        map.fitBounds(bounds, { padding: [60, 60] });
+      }
+    }
+
+    renderSidebar(users);
+    document.getElementById('share-count').textContent =
+      `${users.length} aktif acil durum`;
+    document.getElementById('loading').style.display = 'none';
+  }
+
+  // ── Sidebar ─────────────────────────────────────────────────────────────────
+  function renderSidebar(users) {
+    const list = document.getElementById('user-list');
+    list.innerHTML = users.map((u, i) => {
+      const color = COLORS[i % COLORS.length];
+      const isActive = u.emergency_id === selectedId;
+      return `
+        <div class="user-item ${isActive ? 'active' : ''}"
+             onclick="selectUser('${u.emergency_id}')">
+          <div class="marker-dot" style="background:${color}"></div>
+          <div class="user-info">
+            <h3>${u.firstName} ${u.lastName}</h3>
+            <div class="user-meta">
+              ${u.age ? `${u.age} yaş` : ''}
+              ${u.bloodType ? ` · ${u.bloodType}` : ''}
+              ${u.conditions ? `<br>${u.conditions}` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ── Kullanıcı seç ───────────────────────────────────────────────────────────
+  function selectUser(emergencyId) {
+    // Eski highlight kaldır
+    if (selectedId && state[selectedId]) {
+      state[selectedId].marker.setIcon(
+        makeIcon(state[selectedId].color, false)
+      );
+    }
+
+    selectedId = (selectedId === emergencyId) ? null : emergencyId;
+
+    if (selectedId && state[selectedId]) {
+      state[selectedId].marker.setIcon(
+        makeIcon(state[selectedId].color, true)
+      );
+      map.panTo(state[selectedId].marker.getLatLng(), { animate: true });
+    }
+
+    // Sidebar yenile (aktif class)
+    const allItems = document.querySelectorAll('.user-item');
+    allItems.forEach(el => el.classList.remove('active'));
+    if (selectedId) {
+      const items = document.querySelectorAll('.user-item');
+      const idx   = Object.keys(state).indexOf(selectedId);
+      if (items[idx]) items[idx].classList.add('active');
+    }
+
+    // Open tracker for this emergency
+    if (selectedId) {
+      window.open(`/tracker?emergency_id=${selectedId}`, '_blank');
+    }
+  }
+
+  // ── Demo verisi ─────────────────────────────────────────────────────────────
+  // Backend bağlandığında bu bloğu kaldır
+  let _demoOffset = 0;
+  const DEMO_DATA = [
+    { id: '1', firstName: 'Ahmet',   lastName: 'Yılmaz', age: 34, bloodType: 'A Rh+',  conditions: 'Astım',        lat: 39.920, lng: 32.854 },
+    { id: '2', firstName: 'Zeynep',  lastName: 'Kaya',   age: 28, bloodType: '0 Rh-',  conditions: '',             lat: 39.905, lng: 32.862 },
+    { id: '3', firstName: 'Mehmet',  lastName: 'Demir',  age: 52, bloodType: 'B Rh+',  conditions: 'Diyabet',      lat: 39.932, lng: 32.841 },
+  ];
+  // Konumları hafifçe kaydır (demo animasyon)
+  setInterval(() => {
+    _demoOffset += 0.0005;
+    DEMO_DATA[0].lat += 0.0002; DEMO_DATA[0].lng += 0.0001;
+    DEMO_DATA[1].lat -= 0.0001; DEMO_DATA[1].lng += 0.0002;
+  }, POLL_MS);
+  // ── Demo sonu ───────────────────────────────────────────────────────────────
+
+  // ── Başlat ──────────────────────────────────────────────────────────────────
+  refresh();
+  setInterval(refresh, POLL_MS);
+</script>
+
+</body>
+</html>
